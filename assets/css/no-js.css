@@ -1,0 +1,16 @@
+/**
+ * no-js.css — loaded only from inside <noscript>.
+ *
+ * The cold-open overlay is present and opaque from first paint, so that a
+ * deferred module never lets the hero flash before the sequence covers it.
+ * That means it must be removed by something other than JavaScript when
+ * JavaScript is unavailable, or the page would be a black rectangle.
+ *
+ * A stylesheet in <noscript> is the only mechanism that does this without an
+ * inline <style>, which the Content-Security-Policy forbids.
+ */
+
+.intro-scrim,
+.intro {
+  display: none !important;
+}

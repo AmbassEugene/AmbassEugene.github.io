@@ -1,0 +1,89 @@
+/**
+ * layout.css — the backdrop, the content shell, and section rhythm.
+ *
+ * Structural concerns only: where things sit and how much room they get.
+ * How they look is components.css.
+ */
+
+/* ============================================================
+   BACKDROP — three fixed layers beneath the content
+   ============================================================ */
+
+#field {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-field);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-vignette);
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(61, 245, 196, 0.09), transparent 60%),
+    radial-gradient(90% 70% at 90% 20%, rgba(139, 123, 255, 0.08), transparent 60%),
+    radial-gradient(100% 100% at 50% 100%, rgba(5, 7, 10, 0.95), transparent 55%);
+}
+
+/* Inline SVG noise — a data: URI, so still no network request. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-grain);
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+}
+
+.stage {
+  position: relative;
+  z-index: var(--z-stage);
+}
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+
+.wrap {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding-inline: var(--pad);
+}
+
+/* Constrains prose to a readable measure. */
+.col { max-width: var(--measure); }
+
+/* ============================================================
+   SECTION RHYTHM
+   ============================================================ */
+
+.hero {
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+  padding-block: clamp(4rem, 12vh, 9rem);
+}
+
+.arch { padding-block: clamp(5rem, 12vh, 9rem); }
+
+/* Every section after the architecture nav shares one rule. */
+.case,
+.bg-sec,
+.colophon {
+  padding-block: var(--section);
+  border-top: 1px solid var(--edge);
+}
+
+.arch-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 3rem;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 3.5rem;
+}

@@ -3,784 +3,117 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+  Content-Security-Policy, declared in markup because GitHub Pages cannot set
+  response headers. `default-src 'none'` denies by default; every directive
+  below is an explicit allowance. There is no 'unsafe-inline' because the page
+  contains no inline style or script — all CSS custom properties written at
+  runtime go through the CSSOM (assets/js/dom.js → setVars).
+
+  Two directives cannot be delivered this way and need a real header:
+  frame-ancestors and X-Frame-Options. Documented in docs/security.md.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self';
+  style-src 'self';
+  img-src 'self' data:;
+  font-src 'self';
+  connect-src 'none';
+  base-uri 'none';
+  form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <title>Ambassador Eugene — AI-Native Software Engineer</title>
-<meta name="description" content="Agent systems, LLM guardrails and production AI infrastructure. Three case studies. This page was built entirely with AI — and so was everything on it.">
+<meta name="description" content="Agent systems, LLM guardrails and production AI infrastructure. Three engineering case studies. Built entirely with AI — and so was everything on it.">
 <meta name="color-scheme" content="dark">
 
 <meta property="og:title" content="Ambassador Eugene — AI-Native Software Engineer">
 <meta property="og:description" content="Agent systems, LLM guardrails and production AI infrastructure. Built entirely with AI.">
 <meta property="og:type" content="website">
 
-<style>
-/* ============================================================
-   PALETTE — committed dark. This is a cinematic surface, not a doc.
-   ============================================================ */
-:root {
-  --void:    #05070A;
-  --ink:     #0A0E13;
-  --panel:   rgba(255,255,255,0.035);
-  --panel-2: rgba(255,255,255,0.06);
-  --edge:    rgba(255,255,255,0.10);
-  --edge-2:  rgba(255,255,255,0.18);
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/cold-open.css">
 
-  --text:    #E8F0ED;
-  --dim:     #7E8E8B;
-  --faint:   #4A5754;
+<!-- The overlay is opaque from first paint so a deferred module can never
+     let the hero flash before the sequence covers it. Without scripting
+     there is nothing to remove it, so this stylesheet does. -->
+<noscript><link rel="stylesheet" href="assets/css/no-js.css"></noscript>
 
-  --mint:    #3DF5C4;
-  --violet:  #8B7BFF;
-  --amber:   #FFC86B;
-
-  --grotesk: "Helvetica Neue", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
-
-  --measure: 66ch;
-  --pad: clamp(1.25rem, 4vw, 4rem);
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-
-body {
-  margin: 0;
-  background: var(--void);
-  color: var(--text);
-  font-family: var(--grotesk);
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-a { color: inherit; }
-
-::selection { background: var(--mint); color: var(--void); }
-
-/* ============================================================
-   GENERATIVE FIELD — fixed canvas behind everything
-   ============================================================ */
-#field {
-  position: fixed; inset: 0;
-  width: 100%; height: 100%;
-  z-index: 0;
-  opacity: 0.55;
-  pointer-events: none;
-}
-.vignette {
-  position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(61,245,196,0.09), transparent 60%),
-    radial-gradient(90% 70% at 90% 20%, rgba(139,123,255,0.08), transparent 60%),
-    radial-gradient(100% 100% at 50% 100%, rgba(5,7,10,0.95), transparent 55%);
-}
-.grain {
-  position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0.16;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
-}
-
-.stage { position: relative; z-index: 3; }
-
-/* ============================================================
-   COLD OPEN — singularity → bang → matter → line → handoff
-   The debris from the bang IS the ambient field. Same particles.
-   ============================================================ */
-
-/* During the intro the canvas is lifted above the scrim so the
-   explosion is visible; afterwards it drops back to z-index 0. */
-body.intro-active { overflow: hidden; }
-body.intro-active #field { z-index: 55; opacity: 1; }
-
-.intro-scrim {
-  position: fixed; inset: 0; z-index: 50;
-  background: var(--void);
-  pointer-events: none;
-}
-
-#intro {
-  position: fixed; inset: 0; z-index: 60;
-  display: grid; place-items: center;
-  overflow: hidden;
-  text-align: center;
-}
-
-.intro-scrim.out, #intro.out {
-  opacity: 0;
-  transition: opacity 0.75s cubic-bezier(.4,0,.2,1);
-}
-
-/* --- ACT I: the void --- */
-.scanline {
-  position: absolute; left: 0; right: 0; top: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(61,245,196,0.55), transparent);
-  opacity: 0;
-  animation: scan 2200ms cubic-bezier(.4,0,.2,1) 120ms forwards;
-}
-@keyframes scan {
-  0%   { transform: translateY(0); opacity: 0; }
-  12%  { opacity: 0.9; }
-  88%  { opacity: 0.5; }
-  100% { transform: translateY(100vh); opacity: 0; }
-}
-
-/* the readout — ties the cosmology to the CV */
-.readout {
-  position: absolute; left: 50%; top: calc(50% + 12vmin);
-  transform: translateX(-50%);
-  font-family: var(--mono);
-  font-size: clamp(0.66rem, 0.6rem + 0.3vw, 0.8rem);
-  letter-spacing: 0.16em; text-transform: lowercase;
-  color: var(--faint);
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 400ms ease, color 400ms ease;
-}
-.readout.show { opacity: 1; }
-.readout.hot { color: var(--mint); letter-spacing: 0.22em; }
-
-/* --- the singularity: one point, breathing, then tightening --- */
-.singularity {
-  position: absolute; top: 50%; left: 50%;
-  width: 6px; height: 6px; margin: -3px 0 0 -3px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 18px 6px rgba(61,245,196,0.85), 0 0 60px 20px rgba(139,123,255,0.35);
-  transform: scale(0);
-  animation:
-    singularity-in 900ms cubic-bezier(.6,0,.9,.2) 300ms forwards,
-    breathe 2400ms ease-in-out 1200ms infinite;
-}
-@keyframes singularity-in {
-  0%   { transform: scale(0); opacity: 0; }
-  55%  { transform: scale(1.5); opacity: 1; }
-  100% { transform: scale(0.7); opacity: 1; }
-}
-@keyframes breathe {
-  0%, 100% { transform: scale(0.7); }
-  50%      { transform: scale(1.15); }
-}
-/* critical mass: the strobe before detonation */
-.singularity.critical {
-  animation: strobe 130ms steps(2, start) infinite;
-}
-@keyframes strobe {
-  0%   { transform: scale(1.5); box-shadow: 0 0 34px 14px rgba(255,255,255,0.95), 0 0 90px 40px rgba(61,245,196,0.6); }
-  100% { transform: scale(0.9); box-shadow: 0 0 18px 6px rgba(61,245,196,0.85); }
-}
-.singularity.blown { animation: singularity-out 620ms ease-out forwards; }
-@keyframes singularity-out {
-  0%   { transform: scale(1.2); opacity: 1; }
-  30%  { transform: scale(11); opacity: 1; }
-  100% { transform: scale(30); opacity: 0; }
-}
-
-/* the collapsing rings — three, tightening in sequence */
-.collapse-ring {
-  position: absolute; top: 50%; left: 50%;
-  width: 60vmin; height: 60vmin; margin: -30vmin 0 0 -30vmin;
-  border: 1px solid rgba(61,245,196,0.45);
-  border-radius: 50%;
-  transform: scale(1.6); opacity: 0;
-}
-.collapse-ring.go { animation: collapse var(--dur, 1500ms) cubic-bezier(.55,0,.85,.35) forwards; }
-.collapse-ring.r2 { border-color: rgba(139,123,255,0.45); border-style: dashed; }
-.collapse-ring.r3 { border-color: rgba(255,255,255,0.35); }
-@keyframes collapse {
-  0%   { transform: scale(1.7) rotate(0deg); opacity: 0; }
-  25%  { opacity: 0.85; }
-  100% { transform: scale(0.02) rotate(120deg); opacity: 0; }
-}
-
-/* --- vibration: amplitude and frequency both driven by JS as mass grows --- */
-#intro { --amp: 0px; --tdur: 180ms; }
-#intro.tremor { animation: tremor var(--tdur) ease-in-out infinite; }
-@keyframes tremor {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20%      { transform: translate(var(--amp), calc(var(--amp) * -0.75)) rotate(calc(var(--amp) * 0.035)); }
-  40%      { transform: translate(calc(var(--amp) * -0.85), calc(var(--amp) * 0.9)) rotate(calc(var(--amp) * -0.03)); }
-  60%      { transform: translate(calc(var(--amp) * 0.7), calc(var(--amp) * 0.8)) rotate(calc(var(--amp) * 0.025)); }
-  80%      { transform: translate(calc(var(--amp) * -0.6), calc(var(--amp) * -0.5)) rotate(0deg); }
-}
-/* the scrim shakes a touch less — parallax makes it read as depth, not jitter */
-.intro-scrim.tremor { animation: tremor var(--tdur, 180ms) ease-in-out infinite; --amp: 0px; }
-#intro.quake { animation: quake 900ms cubic-bezier(.25,.9,.3,1) forwards; }
-@keyframes quake {
-  0%   { transform: translate(0,0) scale(1); }
-  6%   { transform: translate(-14px, 9px) scale(1.012); }
-  14%  { transform: translate(12px, -11px) scale(1.009); }
-  24%  { transform: translate(-9px, -7px) scale(1.006); }
-  36%  { transform: translate(7px, 6px) scale(1.004); }
-  50%  { transform: translate(-4px, 3px); }
-  68%  { transform: translate(3px, -2px); }
-  100% { transform: translate(0,0) scale(1); }
-}
-
-/* --- constellation: the shards wire themselves together --- */
-.constellation {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; overflow: visible;
-}
-.constellation line {
-  stroke: rgba(61,245,196,0.42);
-  stroke-width: 1;
-  stroke-dasharray: var(--len);
-  stroke-dashoffset: var(--len);
-}
-.constellation line.draw {
-  animation: draw-line 700ms cubic-bezier(.3,.8,.4,1) forwards;
-}
-@keyframes draw-line { to { stroke-dashoffset: 0; } }
-.constellation.dim { opacity: 0.28; transition: opacity 900ms ease; }
-
-/* --- detonation: white core refracting out through the spectrum --- */
-.flash {
-  position: absolute; inset: 0;
-  opacity: 0; pointer-events: none;
-  background: radial-gradient(closest-side,
-    rgba(255,255,255,0.98)  0%,
-    rgba(200,255,246,0.92) 10%,
-    rgba(61,245,196,0.84)  22%,
-    rgba(80,214,255,0.74)  34%,
-    rgba(139,123,255,0.64) 47%,
-    rgba(232,110,255,0.52) 60%,
-    rgba(255,105,140,0.38) 73%,
-    rgba(255,200,107,0.22) 85%,
-    transparent 95%);
-}
-.flash.fire { animation: flash 900ms cubic-bezier(.1,.8,.3,1) forwards, prism 900ms linear forwards; }
-@keyframes flash {
-  0%   { opacity: 0; transform: scale(0.12); }
-  10%  { opacity: 1; transform: scale(1.15); }
-  100% { opacity: 0; transform: scale(3); }
-}
-@keyframes prism {
-  0%   { filter: hue-rotate(0deg) saturate(2.2) brightness(1.5); }
-  100% { filter: hue-rotate(85deg) saturate(1) brightness(1); }
-}
-
-/* chromatic aberration — the channels separate, then converge */
-.ca {
-  position: absolute; inset: 0; opacity: 0; pointer-events: none;
-  mix-blend-mode: screen; border-radius: 50%;
-}
-.ca.r { background: radial-gradient(closest-side, rgba(255,40,60,0.75), transparent 62%); }
-.ca.g { background: radial-gradient(closest-side, rgba(40,255,150,0.75), transparent 62%); }
-.ca.b { background: radial-gradient(closest-side, rgba(60,120,255,0.75), transparent 62%); }
-.ca.fire { animation: ca 820ms cubic-bezier(.12,.85,.3,1) forwards; }
-.ca.r.fire { animation-name: ca-r; }
-.ca.b.fire { animation-name: ca-b; }
-@keyframes ca   { 0% { opacity: 0; transform: scale(0.2); } 14% { opacity: .9; } 100% { opacity: 0; transform: scale(2.5); } }
-@keyframes ca-r { 0% { opacity: 0; transform: scale(0.2) translate(0,0); } 14% { opacity: .9; transform: scale(1) translate(-2.5vmin, 1vmin); } 100% { opacity: 0; transform: scale(2.5) translate(-5vmin, 2vmin); } }
-@keyframes ca-b { 0% { opacity: 0; transform: scale(0.2) translate(0,0); } 14% { opacity: .9; transform: scale(1) translate(2.5vmin, -1vmin); } 100% { opacity: 0; transform: scale(2.5) translate(5vmin, -2vmin); } }
-
-/* shockwaves — full-spectrum rings, not mono ones */
-.shock {
-  position: absolute; top: 50%; left: 50%;
-  width: 20vmin; height: 20vmin; margin: -10vmin 0 0 -10vmin;
-  border-radius: 50%;
-  opacity: 0;
-  background: conic-gradient(from 0deg,
-    #ff4d6d, #ff9a3c, #ffe066, #3df5c4, #4fd8ff, #8b7bff, #e86eff, #ff4d6d);
-  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
-          mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
-}
-.shock.fire { animation: shock 1500ms cubic-bezier(.15,.85,.25,1) forwards; }
-.shock.s2.fire { animation-delay: 180ms; }
-.shock.s3.fire { animation-delay: 420ms; }
-@keyframes shock {
-  0%   { transform: scale(0.1) rotate(0deg); opacity: 1; }
-  100% { transform: scale(11) rotate(150deg); opacity: 0; }
-}
-
-/* --- matter: fragments popping into existence --- */
-.shards { position: absolute; inset: 0; pointer-events: none; }
-.shard {
-  position: absolute; top: 50%; left: 50%;
-  font-family: var(--mono);
-  font-size: clamp(0.6rem, 0.52rem + 0.35vw, 0.82rem);
-  letter-spacing: 0.04em;
-  color: var(--dim);
-  border: 1px solid var(--edge);
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  border-radius: 3px;
-  padding: 0.28rem 0.6rem;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.2);
-}
-.shard.mint { color: var(--mint); border-color: rgba(61,245,196,0.3); background: rgba(61,245,196,0.06); }
-.shard.violet { color: var(--violet); border-color: rgba(139,123,255,0.3); background: rgba(139,123,255,0.06); }
-.shard.pop { animation: shard-pop 900ms cubic-bezier(.16,1.3,.3,1) forwards; }
-@keyframes shard-pop {
-  0%   { opacity: 0; transform: translate(-50%,-50%) translate(0,0) scale(0.15) rotate(var(--rot)); }
-  45%  { opacity: 1; }
-  70%  { transform: translate(-50%,-50%) translate(var(--x), var(--y)) scale(1.09) rotate(0deg); }
-  100% { opacity: 1; transform: translate(-50%,-50%) translate(var(--x), var(--y)) scale(1) rotate(0deg); }
-}
-
-/* --- the line --- */
-.bang-copy { position: relative; z-index: 2; padding-inline: 1.25rem; }
-
-.bang-l1 {
-  font-size: clamp(1.5rem, 1rem + 3.2vw, 3.6rem);
-  font-weight: 500; letter-spacing: -0.03em; line-height: 1.1;
-  margin: 0 0 0.25em; color: var(--text);
-}
-.bang-l1 .w {
-  display: inline-block; opacity: 0;
-  transform: translateY(0.55em) scale(0.94); filter: blur(6px);
-}
-.bang-l1 .w.in {
-  animation: word-in 620ms cubic-bezier(.18,.9,.25,1) forwards;
-}
-@keyframes word-in {
-  to { opacity: 1; transform: none; filter: blur(0); }
-}
-
-.bang-l2 {
-  font-size: clamp(2.6rem, 1.2rem + 9vw, 9rem);
-  font-weight: 700; line-height: 0.92; letter-spacing: -0.055em;
-  margin: 0; color: var(--mint);
-  text-shadow: 0 0 42px rgba(61,245,196,0.45);
-}
-.bang-l2 .c {
-  display: inline-block; opacity: 0;
-  transform: translateY(0.4em) scale(0.3) rotate(var(--r));
-}
-.bang-l2 .c.in { animation: char-pop 820ms cubic-bezier(.16,1.5,.3,1) forwards; }
-@keyframes char-pop {
-  0%   { opacity: 0; transform: translateY(0.4em) scale(0.3) rotate(var(--r)); }
-  60%  { opacity: 1; transform: translateY(-0.06em) scale(1.2) rotate(0deg); }
-  100% { opacity: 1; transform: none; }
-}
-/* the bloom — one hard pulse once the word has landed */
-.bang-l2.bloom { animation: bloom 1200ms cubic-bezier(.2,.8,.3,1); }
-@keyframes bloom {
-  0%   { text-shadow: 0 0 42px rgba(61,245,196,0.45); }
-  18%  { text-shadow: 0 0 22px rgba(255,255,255,0.95), 0 0 90px rgba(61,245,196,0.9), 0 0 160px rgba(61,245,196,0.55); }
-  100% { text-shadow: 0 0 42px rgba(61,245,196,0.45); }
-}
-.bang-copy.recede { animation: recede 900ms cubic-bezier(.4,0,.2,1) forwards; }
-@keyframes recede {
-  to { opacity: 0; transform: scale(1.12); filter: blur(8px); }
-}
-
-/* --- skip --- */
-.skip-intro {
-  position: absolute; bottom: 2rem; right: 2rem; z-index: 3;
-  font-family: var(--mono); font-size: 0.68rem;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--faint); background: transparent;
-  border: 1px solid var(--edge); border-radius: 3px;
-  padding: 0.6rem 1.1rem; cursor: pointer;
-  transition: color .2s, border-color .2s;
-  opacity: 0; animation: fade-in 400ms ease 400ms forwards;
-}
-.skip-intro:hover { color: var(--mint); border-color: var(--mint); }
-@keyframes fade-in { to { opacity: 1; } }
-
-/* hero waits for the handoff */
-body.intro-active .hero .wrap > * { opacity: 0; }
-
-.replay {
-  font-family: var(--mono); font-size: 0.68rem;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--faint); background: transparent;
-  border: 1px solid var(--edge); border-radius: 3px;
-  padding: 0.5rem 0.95rem; cursor: pointer; margin-top: 1.5rem;
-  transition: color .2s, border-color .2s;
-}
-.replay:hover { color: var(--mint); border-color: var(--mint); }
-
-/* ============================================================
-   SHARED
-   ============================================================ */
-.wrap { max-width: 78rem; margin: 0 auto; padding-inline: var(--pad); }
-.col { max-width: var(--measure); }
-
-.eyebrow {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--mint);
-  margin: 0 0 1rem;
-}
-.eyebrow.violet { color: var(--violet); }
-.eyebrow.dim { color: var(--faint); }
-
-p { margin: 0 0 1.15rem; color: #C9D6D2; }
-strong { color: var(--text); font-weight: 600; }
-em { color: var(--text); }
-
-code {
-  font-family: var(--mono);
-  font-size: 0.86em;
-  color: var(--mint);
-  background: rgba(61,245,196,0.07);
-  border: 1px solid rgba(61,245,196,0.16);
-  border-radius: 3px;
-  padding: 0.08em 0.34em;
-  white-space: nowrap;
-}
-
-/* Reveal-on-scroll (progressive: visible by default, JS opts in) */
-.js .reveal { opacity: 0; transform: translateY(24px); }
-.js .reveal.in { opacity: 1; transform: none; transition: opacity 0.7s cubic-bezier(.2,.7,.3,1), transform 0.7s cubic-bezier(.2,.7,.3,1); }
-
-/* ============================================================
-   01 — HERO / AGENT TRACE
-   ============================================================ */
-.hero {
-  min-height: 100svh;
-  display: grid;
-  align-content: center;
-  padding-block: clamp(4rem, 12vh, 9rem);
-}
-
-.status-line {
-  display: flex; align-items: center; gap: 0.6rem;
-  font-family: var(--mono); font-size: 0.72rem;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--dim); margin-bottom: 2.5rem;
-}
-.dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 0 0 rgba(61,245,196,0.6);
-  animation: pulse 2.4s ease-out infinite;
-}
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(61,245,196,0.55); }
-  70%  { box-shadow: 0 0 0 12px rgba(61,245,196,0); }
-  100% { box-shadow: 0 0 0 0 rgba(61,245,196,0); }
-}
-
-/* The colossal name — brutalist scale, hairline weight */
-.hero h1 {
-  font-size: clamp(2.9rem, 11.5vw, 10.5rem);
-  line-height: 0.86;
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  margin: 0 0 1.5rem;
-  text-transform: uppercase;
-}
-.hero h1 .l2 {
-  display: block;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--edge-2);
-  padding-left: 0.06em;
-}
-
-.thesis {
-  font-size: clamp(1.15rem, 0.95rem + 1.1vw, 1.7rem);
-  line-height: 1.35;
-  letter-spacing: -0.015em;
-  max-width: 30ch;
-  color: var(--text);
-  margin: 0 0 0.6rem;
-  font-weight: 500;
-}
-.thesis b { color: var(--mint); font-weight: 500; }
-.thesis-sub { color: var(--dim); max-width: 46ch; font-size: 1rem; }
-
-/* Streaming trace console */
-.trace {
-  margin-top: 3.5rem;
-  border: 1px solid var(--edge);
-  border-radius: 6px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  font-family: var(--mono);
-  font-size: clamp(0.72rem, 0.68rem + 0.2vw, 0.84rem);
-  line-height: 1.85;
-  overflow: hidden;
-  max-width: 52rem;
-}
-.trace-bar {
-  display: flex; align-items: center; gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--edge);
-  color: var(--faint);
-  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
-  background: rgba(255,255,255,0.02);
-}
-.trace-bar .lamps { display: flex; gap: 5px; }
-.trace-bar .lamps i { width: 8px; height: 8px; border-radius: 50%; background: var(--edge-2); }
-.trace-bar .grow { flex: 1; }
-.trace-body { padding: 1.1rem 1rem 1.3rem; min-height: 12.5rem; }
-.trace-body .ln { display: block; white-space: pre-wrap; word-break: break-word; }
-.trace .k  { color: var(--violet); }
-.trace .s  { color: var(--mint); }
-.trace .c  { color: var(--faint); }
-.trace .ok { color: var(--mint); }
-.caret {
-  display: inline-block; width: 0.55em; height: 1.05em;
-  background: var(--mint); vertical-align: -0.18em;
-  animation: blink 1.05s steps(2, start) infinite;
-}
-@keyframes blink { to { visibility: hidden; } }
-
-.cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.5rem; }
-.btn {
-  font-family: var(--mono); font-size: 0.76rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  text-decoration: none;
-  padding: 0.8rem 1.4rem; border-radius: 3px;
-  border: 1px solid var(--edge-2); color: var(--text);
-  transition: border-color .2s, background .2s, color .2s;
-}
-.btn:hover { border-color: var(--mint); color: var(--mint); background: rgba(61,245,196,0.06); }
-.btn--solid { background: var(--mint); color: var(--void); border-color: var(--mint); font-weight: 600; }
-.btn--solid:hover { background: #7BFFDA; color: var(--void); }
-
-/* ============================================================
-   02 — MARQUEE
-   ============================================================ */
-.marquee {
-  border-block: 1px solid var(--edge);
-  padding-block: 1.15rem;
-  overflow: hidden;
-  background: rgba(255,255,255,0.015);
-}
-.marquee-track {
-  display: flex; gap: 3rem; width: max-content;
-  animation: slide 42s linear infinite;
-  font-family: var(--mono); font-size: 0.76rem;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim);
-  white-space: nowrap;
-}
-.marquee-track span::before { content: "◆"; color: var(--mint); margin-right: 1.5rem; font-size: 0.6rem; vertical-align: 0.15em; }
-@keyframes slide { to { transform: translateX(-50%); } }
-.marquee:hover .marquee-track { animation-play-state: paused; }
-
-/* ============================================================
-   03 — ARCHITECTURE NAV
-   ============================================================ */
-.arch { padding-block: clamp(5rem, 12vh, 9rem); }
-.arch-head { display: flex; flex-wrap: wrap; gap: 1rem 3rem; align-items: end; justify-content: space-between; margin-bottom: 3.5rem; }
-.arch-head h2 {
-  font-size: clamp(1.9rem, 1.3rem + 2.6vw, 3.6rem);
-  line-height: 1.02; letter-spacing: -0.035em; font-weight: 600;
-  margin: 0; text-transform: uppercase; max-width: 16ch;
-}
-.arch-head p { max-width: 34ch; margin: 0; color: var(--dim); font-size: 0.95rem; }
-
-.nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1px; background: var(--edge); border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
-.node {
-  display: block; text-decoration: none;
-  background: var(--ink); padding: 2rem 1.6rem 2.2rem;
-  position: relative; overflow: hidden;
-  transition: background .28s ease;
-}
-.node::after {
-  content: ""; position: absolute; inset: 0;
-  background: radial-gradient(80% 60% at 50% 0%, rgba(61,245,196,0.13), transparent 70%);
-  opacity: 0; transition: opacity .35s ease;
-}
-.node:hover { background: #0D1319; }
-.node:hover::after { opacity: 1; }
-.node > * { position: relative; z-index: 1; }
-.node .n {
-  font-family: var(--mono); font-size: 2.6rem; font-weight: 300;
-  color: transparent; -webkit-text-stroke: 1px var(--edge-2);
-  line-height: 1; display: block; margin-bottom: 1.25rem;
-  transition: -webkit-text-stroke-color .3s ease, color .3s ease;
-}
-.node:hover .n { -webkit-text-stroke-color: var(--mint); }
-.node h3 { font-size: 1.15rem; line-height: 1.25; letter-spacing: -0.015em; margin: 0 0 0.65rem; font-weight: 600; }
-.node p { font-size: 0.9rem; color: var(--dim); margin: 0 0 1.4rem; }
-.node .tag {
-  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--faint);
-  display: flex; align-items: center; gap: 0.5rem;
-}
-.node:hover .tag { color: var(--mint); }
-
-/* ============================================================
-   04 — CASE STUDIES
-   ============================================================ */
-.case { padding-block: clamp(4.5rem, 11vh, 8rem); border-top: 1px solid var(--edge); }
-
-.case-mast { margin-bottom: 3rem; }
-.case-num {
-  font-size: clamp(4rem, 16vw, 12rem);
-  line-height: 0.8; font-weight: 600; letter-spacing: -0.06em;
-  color: transparent; -webkit-text-stroke: 1px var(--edge);
-  display: block; margin-bottom: 0.5rem; pointer-events: none;
-}
-.case h2 {
-  font-size: clamp(1.8rem, 1.25rem + 2.4vw, 3.4rem);
-  line-height: 1.03; letter-spacing: -0.035em; font-weight: 600;
-  margin: 0 0 1.5rem; max-width: 18ch; text-transform: uppercase;
-  scroll-margin-top: 2rem;
-}
-.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-.chip {
-  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.09em;
-  text-transform: uppercase; color: var(--dim);
-  border: 1px solid var(--edge); border-radius: 2px; padding: 0.28rem 0.6rem;
-}
-.chip--live { color: var(--mint); border-color: rgba(61,245,196,0.35); background: rgba(61,245,196,0.05); }
-.stack { font-family: var(--mono); font-size: 0.72rem; line-height: 1.7; color: var(--faint); margin: 0; }
-
-h4 {
-  font-family: var(--mono); font-size: 0.7rem; font-weight: 500;
-  letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint);
-  margin: 2.75rem 0 0.9rem;
-  display: flex; align-items: center; gap: 0.9rem;
-}
-h4::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
-
-ul.findings { margin: 0 0 1.15rem; padding-left: 1.15rem; color: #C9D6D2; }
-ul.findings li { margin-bottom: 0.5rem; }
-ul.findings li::marker { color: var(--mint); }
-
-/* The load-bearing decision — the structural device */
-.decision {
-  margin: 3rem 0;
-  padding: clamp(1.6rem, 4vw, 2.6rem);
-  border: 1px solid var(--edge-2);
-  border-left: 2px solid var(--mint);
-  border-radius: 4px;
-  background: linear-gradient(135deg, rgba(61,245,196,0.055), rgba(255,255,255,0.012) 55%);
-  position: relative;
-}
-.decision .label {
-  display: block; font-family: var(--mono); font-size: 0.66rem;
-  letter-spacing: 0.18em; text-transform: uppercase; color: var(--mint);
-  margin-bottom: 1.1rem;
-}
-.decision .pull {
-  font-size: clamp(1.2rem, 1rem + 1.1vw, 1.75rem);
-  line-height: 1.22; letter-spacing: -0.022em; font-weight: 500;
-  color: var(--text); margin: 0 0 1rem; max-width: 24ch;
-}
-.decision p:last-child { margin-bottom: 0; color: var(--dim); font-size: 0.97rem; }
-
-/* ============================================================
-   05 — BACKGROUND
-   ============================================================ */
-.bg-sec { padding-block: clamp(4.5rem, 11vh, 8rem); border-top: 1px solid var(--edge); }
-.bg-sec h2 {
-  font-size: clamp(1.8rem, 1.25rem + 2.4vw, 3.4rem);
-  line-height: 1.03; letter-spacing: -0.035em; font-weight: 600;
-  text-transform: uppercase; margin: 0 0 3rem; scroll-margin-top: 2rem;
-}
-.stint {
-  display: grid; grid-template-columns: 9rem minmax(0,1fr);
-  gap: 0.4rem 2rem; padding-block: 1.5rem;
-  border-top: 1px solid var(--edge);
-}
-.stint:last-child { border-bottom: 1px solid var(--edge); }
-@media (max-width: 40rem) { .stint { grid-template-columns: 1fr; } }
-.stint .when { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--faint); padding-top: 0.35em; }
-.stint .what { margin: 0; }
-.stint .what b { display: block; font-size: 1.05rem; letter-spacing: -0.01em; margin-bottom: 0.2rem; }
-.stint .what span { color: var(--dim); font-size: 0.94rem; }
-
-/* ============================================================
-   06 — COLOPHON / FOOTER
-   ============================================================ */
-.colophon {
-  padding-block: clamp(4.5rem, 11vh, 8rem);
-  border-top: 1px solid var(--edge);
-}
-.colophon .card {
-  border: 1px solid var(--edge); border-radius: 6px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-  padding: clamp(1.6rem, 4vw, 3rem);
-  margin-bottom: 3.5rem;
-}
-.colophon .card h2 {
-  font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2.2rem);
-  line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 1.2rem; font-weight: 600;
-}
-.colophon .card .col { max-width: 58ch; }
-
-footer.foot {
-  display: flex; flex-wrap: wrap; gap: 1.5rem 3rem;
-  justify-content: space-between; align-items: start;
-  font-family: var(--mono); font-size: 0.74rem; color: var(--faint);
-  padding-bottom: 4rem;
-}
-footer.foot .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
-footer.foot a { text-decoration: none; color: var(--dim); border-bottom: 1px solid var(--edge); padding-bottom: 1px; }
-footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
-
-/* ============================================================
-   A11Y / MOTION
-   ============================================================ */
-.skip { position: absolute; left: -9999px; font-family: var(--mono); font-size: 0.8rem; }
-.skip:focus { left: 1rem; top: 1rem; z-index: 99; padding: 0.6rem 1rem; background: var(--ink); border: 1px solid var(--mint); color: var(--mint); border-radius: 3px; }
-:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 2px; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-  .js .reveal { opacity: 1 !important; transform: none !important; }
-  #field { display: none; }
-}
-</style>
+<script type="module" src="assets/js/main.js"></script>
 </head>
 <body>
 
 <a class="skip" href="#main">Skip to content</a>
 
+<!-- Backdrop. Decorative throughout. -->
 <canvas id="field" aria-hidden="true"></canvas>
 <div class="vignette" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 
-<!-- ================= COLD OPEN =================
-     Purely decorative. The full page exists in the DOM beneath this;
-     the overlay is aria-hidden, skippable, auto-bypassed on deep links,
-     and never rendered under prefers-reduced-motion. -->
-<div class="intro-scrim" id="intro-scrim" aria-hidden="true" hidden></div>
-<div id="intro" aria-hidden="true" hidden>
-  <div class="scanline"></div>
-  <div class="collapse-ring r1" id="ring1"></div>
-  <div class="collapse-ring r2" id="ring2"></div>
-  <div class="collapse-ring r3" id="ring3"></div>
-  <div class="singularity" id="singularity"></div>
-  <p class="readout" id="readout"></p>
-  <div class="flash" id="flash"></div>
-  <div class="ca r" id="ca-r"></div>
-  <div class="ca g" id="ca-g"></div>
-  <div class="ca b" id="ca-b"></div>
-  <div class="shock" id="shock1"></div>
-  <div class="shock s2" id="shock2"></div>
-  <div class="shock s3" id="shock3"></div>
-  <svg class="constellation" id="constellation" aria-hidden="true"></svg>
-  <div class="shards" id="shards"></div>
+<!--
+  Cold open. Purely decorative and entirely optional: the complete page sits
+  in the DOM beneath this overlay, so crawlers and assistive technology never
+  wait on it. Skippable, auto-bypassed on deep links, removed outright under
+  prefers-reduced-motion, and hidden by no-js.css without scripting.
+-->
+<div class="intro-scrim" id="intro-scrim" aria-hidden="true"></div>
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__scanline"></div>
 
-  <div class="bang-copy" id="bang-copy">
-    <p class="bang-l1" id="bang-l1"></p>
-    <p class="bang-l2" id="bang-l2"></p>
+  <div class="intro__ring intro__ring--1" id="ring-1"></div>
+  <div class="intro__ring intro__ring--2" id="ring-2"></div>
+  <div class="intro__ring intro__ring--3" id="ring-3"></div>
+
+  <div class="intro__singularity" id="singularity"></div>
+  <p class="intro__readout" id="readout"></p>
+
+  <div class="intro__flash" id="flash"></div>
+  <div class="intro__ca intro__ca--r"></div>
+  <div class="intro__ca intro__ca--g"></div>
+  <div class="intro__ca intro__ca--b"></div>
+
+  <div class="intro__shock intro__shock--1"></div>
+  <div class="intro__shock intro__shock--2"></div>
+  <div class="intro__shock intro__shock--3"></div>
+
+  <svg class="intro__constellation" id="constellation" aria-hidden="true"></svg>
+  <div class="intro__shards" id="shards"></div>
+
+  <div class="intro__copy" id="intro-copy">
+    <p class="intro__line" id="intro-statement"></p>
+    <p class="intro__shout" id="intro-shout"></p>
   </div>
 
-  <button class="skip-intro" id="skip-intro" type="button">Skip intro</button>
+  <button class="btn btn--ghost intro__skip" id="skip-intro" type="button">Skip intro</button>
 </div>
 
 <div class="stage">
 
-<!-- ================= HERO ================= -->
+<!-- ============================================================
+     HERO
+     ============================================================ -->
 <header class="hero">
   <div class="wrap">
     <p class="status-line"><span class="dot"></span> Available · AI-native engineering roles · remote worldwide</p>
 
-    <h1>Ambassador<span class="l2">Eugene</span></h1>
+    <h1 class="t-display">Ambassador<span class="hero__name-2 t-outline">Eugene</span></h1>
 
     <p class="thesis">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
-    <p class="thesis thesis-sub">Ten years shipping React, React Native and Node. The last two building the layer underneath the demos: bounded tool loops, guardrails enforced by the call graph rather than the prompt, multi-model routing, durable orchestration. The model writes fast. I decide what it's allowed to touch, what gets enforced structurally, and what ships. Three systems below — each with the decision that carried it.</p>
+    <p class="thesis thesis--sub">Ten years shipping React, React Native and Node. The last two building the layer underneath the demos: bounded tool loops, guardrails enforced by the call graph rather than the prompt, multi-model routing, durable orchestration. The model writes fast. I decide what it's allowed to touch, what gets enforced structurally, and what ships. Three systems below — each with the decision that carried it.</p>
 
-    <div class="trace" role="img" aria-label="Simulated agent trace showing this portfolio being assembled: loading candidate profile, three case studies, and rendering the page.">
-      <div class="trace-bar">
-        <span class="lamps"><i></i><i></i><i></i></span>
+    <div class="trace" role="img" aria-label="Decorative console showing a simulated agent run that loads the three case studies below.">
+      <div class="trace__bar">
+        <span class="trace__lamps"><i></i><i></i><i></i></span>
         <span>agent · session 01</span>
-        <span class="grow"></span>
+        <span class="trace__grow"></span>
         <span id="trace-state">running</span>
       </div>
-      <div class="trace-body" id="trace" aria-hidden="true"></div>
+      <div class="trace__body" id="trace" aria-hidden="true"></div>
     </div>
 
     <div class="cta-row">
@@ -790,48 +123,54 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
   </div>
 </header>
 
-<!-- ================= MARQUEE ================= -->
+<!-- ============================================================
+     CAPABILITY STRIP
+     ============================================================ -->
 <div class="marquee" aria-hidden="true">
-  <div class="marquee-track" id="marquee"></div>
+  <div class="marquee__track" id="marquee"></div>
 </div>
 
 <main id="main">
 
-<!-- ================= ARCHITECTURE NAV ================= -->
+<!-- ============================================================
+     ARCHITECTURE NAV
+     ============================================================ -->
 <section class="arch wrap" id="work">
   <div class="arch-head reveal">
-    <h2>Three systems,<br>one idea</h2>
+    <h2 class="t-section">Three systems,<br>one idea</h2>
     <p>Boundaries that hold because of structure, not because you asked the model nicely. Pick a node.</p>
   </div>
 
   <nav class="nodes reveal" aria-label="Case studies">
     <a class="node" href="#tadhkir">
-      <span class="n">01</span>
-      <h3>A guardrailed, data-aware AI copilot</h3>
+      <span class="node__n t-outline" aria-hidden="true">01</span>
+      <h3 class="node__title">A guardrailed, data-aware AI copilot</h3>
       <p>An LLM with database access on a multi-tenant platform, shipped without it becoming a breach.</p>
-      <span class="tag">Anthropic SDK · Guardrails →</span>
+      <span class="node__tag">Anthropic SDK · Guardrails →</span>
     </a>
     <a class="node" href="#eugenius">
-      <span class="n">02</span>
-      <h3>Multi-agent code generation, self-healing</h3>
+      <span class="node__n t-outline" aria-hidden="true">02</span>
+      <h3 class="node__title">Multi-agent code generation, self-healing</h3>
       <p>Seven agents, durable execution, and a loop that patches the app after it ships.</p>
-      <span class="tag">Inngest · Pinecone · Routing →</span>
+      <span class="node__tag">Inngest · Pinecone · Routing →</span>
     </a>
     <a class="node" href="#zerli">
-      <span class="n">03</span>
-      <h3>Legacy app to multi-tenant SaaS</h3>
+      <span class="node__n t-outline" aria-hidden="true">03</span>
+      <h3 class="node__title">Legacy app to multi-tenant SaaS</h3>
       <p>Auditing my own two-year-old code, finding critical issues, and migrating without stopping shipping.</p>
-      <span class="tag">Expo · Postgres · Tenancy →</span>
+      <span class="node__tag">Expo · Postgres · Tenancy →</span>
     </a>
   </nav>
 </section>
 
-<!-- ================= CASE 01 ================= -->
+<!-- ============================================================
+     CASE 01
+     ============================================================ -->
 <article class="case wrap">
-  <div class="case-mast reveal">
-    <span class="case-num" aria-hidden="true">01</span>
+  <div class="case__mast reveal">
+    <span class="case__num t-outline" aria-hidden="true">01</span>
     <p class="eyebrow">Istibqa Ltd · Co-founder &amp; CTO</p>
-    <h2 id="tadhkir">A guardrailed, data-aware AI copilot</h2>
+    <h2 class="t-section" id="tadhkir">A guardrailed, data-aware AI copilot</h2>
     <div class="chips">
       <span class="chip chip--live">Built · pre-launch</span>
       <span class="chip">Multi-tenant</span>
@@ -841,11 +180,11 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
   </div>
 
   <div class="col reveal">
-    <h4>Context</h4>
+    <h4 class="sub-head">Context</h4>
     <p>Tadhkir is a WhatsApp retention platform for recurring-visit service businesses — dental practices, optical clinics, physiotherapists, salons — across the UK, Gulf, US and Africa. It tracks when each customer is due back and sends a personalised reminder at the right interval for that industry.</p>
     <p>Owners kept asking questions the dashboard couldn't answer: <em>which customers am I about to lose, and what should I do about it?</em> The obvious answer was an assistant over their data. The non-obvious part was doing that safely on a platform holding patient and client records.</p>
 
-    <h4>The problem</h4>
+    <h4 class="sub-head">The problem</h4>
     <p>An LLM with database access on a multi-tenant platform is a data breach waiting to happen. Three risks had to close before shipping:</p>
     <ul class="findings">
       <li><strong>Cross-tenant leakage.</strong> If the model can name which business's data to fetch, a prompt injection can make it name someone else's.</li>
@@ -853,14 +192,14 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
       <li><strong>Cost as an attack surface.</strong> An assistant running on our API credits is a free general-purpose LLM if anyone thinks to use it as one.</li>
     </ul>
 
-    <h4>What I built</h4>
+    <h4 class="sub-head">What I built</h4>
     <p><strong>One engine, two surfaces.</strong> A single <code>runCopilot()</code> loop drives both the customer-facing Revenue Copilot and the internal Admin Copilot. Each supplies its own system prompt and tool set; the loop, guardrails and limits are identical. Two implementations would have drifted within a month — and the weaker one becomes the vulnerability.</p>
     <p><strong>A bounded agent loop.</strong> Call the model → execute any <code>tool_use</code> against server-bound context → feed <code>tool_result</code> back → repeat until a text answer, capped at six rounds. The cap matters: an unbounded tool loop is an unbounded bill.</p>
   </div>
 
   <div class="decision reveal">
-    <span class="label">The load-bearing decision</span>
-    <p class="pull">Injection can't talk its way past a function signature.</p>
+    <span class="decision__label">The load-bearing decision</span>
+    <p class="decision__pull">Injection can't talk its way past a function signature.</p>
     <p>Tool handlers receive tenant context resolved server-side from the authenticated session, and <em>never</em> accept a tenant selector as a model-supplied argument. The model cannot ask for another business's data because there is no parameter through which to ask. "Only discuss this business" is advisory. This is architectural.</p>
   </div>
 
@@ -869,18 +208,20 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
     <p><strong>A layered guardrail pipeline.</strong> Every request from both surfaces runs through one <code>guardedCopilot</code> wrapper: input caps at 30 messages per conversation and 4,000 chars per message; rate limits of 15/min and 200/day per user plus a global daily circuit breaker; injection and exfiltration screening that pattern-checks the latest turn for instruction-override, system-prompt extraction and cross-tenant probes, returning a canned refusal <em>without calling the model</em> so abuse burns no credits; a strike-based cooldown where five flagged requests in ten minutes triggers a 30-minute lockout, handling the determined abuser rather than just the opportunist; and output scrubbing of anything credential-shaped as defence in depth.</p>
     <p><strong>Cost control through model tiering.</strong> The expensive Sonnet tool loop sits behind a cheap Haiku classifier that runs first and rejects off-scope requests — marketing copy, coding help, general consulting — before any billable frontier call. Persistent off-label use trips the same strike system. The classifier fails open, so an outage degrades to "slightly more expensive" rather than "copilot down."</p>
 
-    <h4>What I'd highlight in review</h4>
+    <h4 class="sub-head">What I'd highlight in review</h4>
     <p>The interesting work wasn't prompt engineering. It was deciding which safety properties could be trusted to a prompt and which had to be enforced by the type system and the call graph. Anything a determined user could talk the model out of — tenant scope, PII access — became structural. Anything advisory — tone, refusal style — stayed in the prompt.</p>
     <p><strong>Also shipped:</strong> multi-market billing across Stripe and Paystack in six currencies; WhatsApp Cloud API messaging in 10 languages; CSV and physical-document ingestion; a tiered affiliate engine with config-driven commission. The copilot engine is unit-tested against a mocked SDK, with Playwright covering end-to-end flows.</p>
   </div>
 </article>
 
-<!-- ================= CASE 02 ================= -->
+<!-- ============================================================
+     CASE 02
+     ============================================================ -->
 <article class="case wrap">
-  <div class="case-mast reveal">
-    <span class="case-num" aria-hidden="true">02</span>
-    <p class="eyebrow violet">Minigigs Ltd · Founder &amp; Principal Engineer</p>
-    <h2 id="eugenius">Multi-agent code generation with a self-healing loop</h2>
+  <div class="case__mast reveal">
+    <span class="case__num t-outline" aria-hidden="true">02</span>
+    <p class="eyebrow eyebrow--violet">Minigigs Ltd · Founder &amp; Principal Engineer</p>
+    <h2 class="t-section" id="eugenius">Multi-agent code generation with a self-healing loop</h2>
     <div class="chips">
       <span class="chip chip--live">Working beta</span>
       <span class="chip">~67K LOC</span>
@@ -891,19 +232,19 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
   </div>
 
   <div class="col reveal">
-    <h4>Context</h4>
+    <h4 class="sub-head">Context</h4>
     <p>AI app builders generate fast demos that tend to be unarchitected and fragile under real users, and they work in English only. Eugenius takes a different position: plan before building, generate natively in the user's own language, and keep running the app after it ships.</p>
 
-    <h4>The problem</h4>
+    <h4 class="sub-head">The problem</h4>
     <p>Three engineering problems sit underneath that product bet. A full app build takes minutes, not seconds — so any architecture where a dropped connection or a server restart loses the work is unusable. Frontier-model pricing applied to every step makes the unit economics impossible; not every task in a build needs the most capable model. And generation is the easy half: tools that stop at "here's your code" leave the user alone with a runtime error they can't debug — precisely the user who couldn't write the code in the first place.</p>
 
-    <h4>What I built</h4>
+    <h4 class="sub-head">What I built</h4>
     <p><strong>A 7-agent orchestration pipeline.</strong> Architect → generator → reviewer → test → deploy, running in parallel where stages are independent and sequentially where one's output is another's input, sharing context as the build progresses. The architect stage is the differentiator: requirements and architecture are settled <em>before</em> generation, so the output is a designed system rather than an accumulation of files.</p>
   </div>
 
   <div class="decision reveal">
-    <span class="label">The load-bearing decision</span>
-    <p class="pull">Durable execution, not a long-lived request.</p>
+    <span class="decision__label">The load-bearing decision</span>
+    <p class="decision__pull">Durable execution, not a long-lived request.</p>
     <p>Every stage runs as a checkpointed background job on Inngest. A build taking several minutes survives restarts and partial failures, resuming from the last completed stage instead of starting over. This was the difference between a demo and something a user can rely on.</p>
   </div>
 
@@ -913,18 +254,20 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
     <p><strong>Self-healing after deploy.</strong> Runtime error signals from deployed applications route back into the agent loop, which diagnoses and patches the live app. This closes the build-and-run gap pure code-generation tools leave open — and it's only possible because the platform owns the deployment, not just the codebase.</p>
     <p><strong>Language-native generation.</strong> Rather than generating English and machine-translating it, the generation path writes natively in the target language. Supporting this meant building a compile-time i18n system across six locales where locales are compiled artefacts advertised from a single config, rather than runtime translation with its latency and quality costs.</p>
 
-    <h4>What I'd highlight in review</h4>
+    <h4 class="sub-head">What I'd highlight in review</h4>
     <p>The codebase runs under CI gates on lint, typecheck and coverage, with strict TypeScript, conventional commits and ADRs for significant decisions. Ahead of launch I ran a full self-audit of the platform, and it found real security gaps — including two critical. I documented them honestly in the repo and drove a remediation sprint rather than shipping on a "production-ready" claim the code hadn't yet earned.</p>
     <p>That audit is the part of this project I'd most want to talk through. It's straightforward to write the marketing sentence; the useful skill is auditing your own work adversarially and then acting on what you find when nobody would have known otherwise.</p>
   </div>
 </article>
 
-<!-- ================= CASE 03 ================= -->
+<!-- ============================================================
+     CASE 03
+     ============================================================ -->
 <article class="case wrap">
-  <div class="case-mast reveal">
-    <span class="case-num" aria-hidden="true">03</span>
+  <div class="case__mast reveal">
+    <span class="case__num t-outline" aria-hidden="true">03</span>
     <p class="eyebrow">Zerli · Senior engineer → platform lead</p>
-    <h2 id="zerli">From legacy single-venue app to multi-tenant SaaS</h2>
+    <h2 class="t-section" id="zerli">From legacy single-venue app to multi-tenant SaaS</h2>
     <div class="chips">
       <span class="chip chip--live">Preparing launch</span>
       <span class="chip">4 applications</span>
@@ -934,10 +277,10 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
   </div>
 
   <div class="col reveal">
-    <h4>Context</h4>
+    <h4 class="sub-head">Context</h4>
     <p>I built the ordering platform for Luciana's Grill from zero — customer mobile apps for iOS and Android, an operator app, a web ordering front end, and the backend behind menu management, order routing and kitchen operations. When the venue wound down, the platform was the asset worth keeping. Zerli is that platform re-architected into a multi-tenant SaaS any restaurant can run on.</p>
 
-    <h4>The starting point</h4>
+    <h4 class="sub-head">The starting point</h4>
     <p>The honest baseline was a working product carrying real debt. A pre-migration audit found:</p>
     <ul class="findings">
       <li><strong>Signing keystores committed to git</strong> in both mobile apps</li>
@@ -948,14 +291,14 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
     </ul>
     <p>None of this was surprising for a product built fast to serve one venue. All of it was disqualifying for a platform meant to hold other businesses' payment and customer data.</p>
 
-    <h4>What I did</h4>
+    <h4 class="sub-head">What I did</h4>
     <p><strong>Specced before touching code.</strong> I wrote a full technical specification — current state, known issues ranked by severity, target state, phased migration — and had it approved before development. On a migration this broad, the specification is the thing that stops it becoming an eighteen-month rewrite.</p>
     <p><strong>Closed the security findings first.</strong> Credentials out of version control and rotated, the admin SDK removed from the client bundle, CORS locked to known origins. Security debt compounds and can't be shipped on top of.</p>
   </div>
 
   <div class="decision reveal">
-    <span class="label">The load-bearing decision</span>
-    <p class="pull">Sequence the migration. Never run it all at once.</p>
+    <span class="decision__label">The load-bearing decision</span>
+    <p class="decision__pull">Sequence the migration. Never run it all at once.</p>
     <p>Security, then language, then framework, then data, then tenancy. Migrating four applications, a database and a payment layer simultaneously fails. Sequencing it meant the product stayed shippable throughout.</p>
   </div>
 
@@ -964,58 +307,63 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
     <p><strong>Migrated off Firebase to Postgres.</strong> Firestore's document model fought the relational shape of orders, menus and venues. Moving to PostgreSQL — with migration scripts written and reversible — gave real constraints, real joins and a schema that could express tenancy.</p>
     <p><strong>Re-architected for multi-tenancy.</strong> Tenant data isolation, per-venue configuration, onboarding, and an app-factory build script that produces a branded application per restaurant from shared source rather than forking the codebase per customer. Payments span Stripe and Paystack, covering checkout, webhooks, refunds and reconciliation.</p>
 
-    <h4>What I'd highlight in review</h4>
+    <h4 class="sub-head">What I'd highlight in review</h4>
     <p>This is the project where I learned that inheriting your own code is its own discipline. I wrote the original, and the audit that catalogued its problems was an audit of my own work from two years earlier. Writing "keystore committed to git — critical" about your own commit is uncomfortable and exactly the right thing to do; the alternative is a platform that leaks other people's customers.</p>
   </div>
 </article>
 
-<!-- ================= BACKGROUND ================= -->
+<!-- ============================================================
+     BACKGROUND
+     ============================================================ -->
 <section class="bg-sec wrap">
-  <h2 id="background" class="reveal">Background</h2>
+  <h2 class="t-section reveal" id="background">Background</h2>
   <div class="reveal">
     <div class="stint">
-      <p class="when">2026 — present</p>
-      <p class="what"><b>Istibqa Ltd — Co-founder &amp; CTO</b><span>Tadhkir: WhatsApp retention platform. Architecture, engineering and delivery.</span></p>
+      <p class="stint__when">2026 — present</p>
+      <p class="stint__what"><b>Istibqa Ltd — Co-founder &amp; CTO</b><span>Tadhkir: WhatsApp retention platform. Architecture, engineering and delivery.</span></p>
     </div>
     <div class="stint">
-      <p class="when">2024 — present</p>
-      <p class="what"><b>Minigigs Ltd — Founder &amp; Principal Engineer</b><span>Eugenius AI: agentic platform generating production web applications from conversation.</span></p>
+      <p class="stint__when">2024 — present</p>
+      <p class="stint__what"><b>Minigigs Ltd — Founder &amp; Principal Engineer</b><span>Eugenius AI: agentic platform generating production web applications from conversation.</span></p>
     </div>
     <div class="stint">
-      <p class="when">2022 — 2024</p>
-      <p class="what"><b>Luciana's Grill — Senior React / React Native Engineer</b><span>Built the ordering platform end to end; now re-architected as Zerli.</span></p>
+      <p class="stint__when">2022 — 2024</p>
+      <p class="stint__what"><b>Luciana's Grill — Senior React / React Native Engineer</b><span>Built the ordering platform end to end; now re-architected as Zerli.</span></p>
     </div>
     <div class="stint">
-      <p class="when">2016 — 2022</p>
-      <p class="what"><b>Earlier engineering roles</b><span>Production JavaScript, React, React Native and Node.js across web and mobile. Full detail on request.</span></p>
+      <p class="stint__when">2016 — 2022</p>
+      <p class="stint__what"><b>Earlier engineering roles</b><span>Production JavaScript, React, React Native and Node.js across web and mobile. Full detail on request.</span></p>
     </div>
     <div class="stint">
-      <p class="when">Education</p>
-      <p class="what"><b>BCA — Bangalore University</b><span>Computer applications.</span></p>
+      <p class="stint__when">Education</p>
+      <p class="stint__what"><b>BCA — Bangalore University</b><span>Computer applications.</span></p>
     </div>
   </div>
 </section>
 
-<!-- ================= COLOPHON ================= -->
+<!-- ============================================================
+     COLOPHON
+     ============================================================ -->
 <section class="colophon wrap">
   <div class="card reveal">
-    <p class="eyebrow dim">Colophon</p>
-    <h2>Yes — this page was built with AI. That's the point.</h2>
+    <p class="eyebrow eyebrow--faint">Colophon</p>
+    <h2 class="t-card">Yes — this page was built with AI. That's the point.</h2>
     <div class="col">
       <p>Every system documented above was built by pair-programming with frontier models under a written engineering standard: conventional commits, ADRs for significant decisions, CI gates on lint, typecheck and coverage, and a security audit before launch rather than after.</p>
-      <p>That's the actual claim. Not that AI wrote some code — anyone can get that. It's that the output holds up to the same review a hand-written system gets, because the judgement about <em>what to build, what to trust the model with, and what to enforce structurally</em> stayed with the engineer. This page is the smallest example: one hand-directed HTML file, no framework, no build step, no third-party requests.</p>
+      <p>That's the actual claim. Not that AI wrote some code — anyone can get that. It's that the output holds up to the same review a hand-written system gets, because the judgement about <em>what to build, what to trust the model with, and what to enforce structurally</em> stayed with the engineer.</p>
+      <p>This page is the smallest example. No framework, no build step, no dependencies, and not one third-party request. Modular CSS, ES modules with a single composition root, a deny-by-default Content-Security-Policy, and no <code>innerHTML</code> anywhere in the codebase. The source is meant to be read — <a href="https://github.com/AmbassEugene" rel="me noopener noreferrer">it's part of the application</a>.</p>
       <p>The particles drifting behind this page are the debris from the explosion that opened it — same system, cooled down. Nothing here is stock.</p>
-      <button class="replay" type="button" onclick="window.__replayIntro &amp;&amp; window.__replayIntro()">↻ Replay the opening</button>
+      <button class="btn btn--ghost" id="replay-intro" type="button">↻ Replay the opening</button>
     </div>
   </div>
 
   <footer class="foot">
     <div>
-      <div class="links">
+      <div class="foot__links">
         <a href="mailto:eugene.ambass@gmail.com">eugene.ambass@gmail.com</a>
-        <a href="https://github.com/AmbassEugene">GitHub</a>
-        <a href="https://dev.to/ambasseugene">dev.to</a>
-        <a href="https://medium.com/@eugene.ambass">Medium</a>
+        <a href="https://github.com/AmbassEugene" rel="me noopener noreferrer">GitHub</a>
+        <a href="https://dev.to/ambasseugene" rel="me noopener noreferrer">dev.to</a>
+        <a href="https://medium.com/@eugene.ambass" rel="me noopener noreferrer">Medium</a>
       </div>
     </div>
     <div>Blackpool, UK · open to remote worldwide</div>
@@ -1024,554 +372,6 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
 
 </main>
 </div>
-
-<script>
-document.documentElement.classList.add('js');
-
-/* ---------- Reveal on scroll ---------- */
-(function () {
-  var els = document.querySelectorAll('.reveal');
-  if (!('IntersectionObserver' in window)) {
-    els.forEach(function (e) { e.classList.add('in'); });
-    return;
-  }
-  var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (en) {
-      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
-    });
-  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.05 });
-  els.forEach(function (e) { io.observe(e); });
-})();
-
-/* ---------- Marquee ---------- */
-(function () {
-  var items = [
-    'Agent orchestration', 'Bounded tool loops', 'Prompt-injection defence',
-    'Multi-model routing', 'Durable execution', 'RAG + Pinecone',
-    'Multi-tenant isolation', 'TypeScript (strict)', 'React · React Native',
-    'Node.js', 'PostgreSQL · Supabase', 'Stripe · Paystack', 'Evals & tracing',
-    'Next.js', 'Inngest', 'i18n at compile time'
-  ];
-  var track = document.getElementById('marquee');
-  if (!track) return;
-  var html = items.map(function (i) { return '<span>' + i + '</span>'; }).join('');
-  track.innerHTML = html + html; // duplicate for seamless -50% loop
-})();
-
-/* ---------- Hero agent trace ---------- */
-(function () {
-  var out = document.getElementById('trace');
-  var state = document.getElementById('trace-state');
-  if (!out) return;
-
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  var script = [
-    { t: 'c',  s: '// this page, assembling itself' },
-    { t: 'sys',s: '▸ init(candidate)' },
-    { t: 'res',s: '  ↳ 10 yrs · react · node · agent systems', ok: '12ms' },
-    { t: 'sys',s: '▸ tool_use: load_case_study' },
-    { t: 'arg',s: '  { id: "tadhkir", depth: "full" }' },
-    { t: 'res',s: '  ↳ guardrails · tenant isolation · model tiering', ok: 'ok' },
-    { t: 'sys',s: '▸ tool_use: load_case_study' },
-    { t: 'arg',s: '  { id: "eugenius", depth: "full" }' },
-    { t: 'res',s: '  ↳ 7 agents · durable exec · self-healing loop', ok: 'ok' },
-    { t: 'sys',s: '▸ tool_use: load_case_study' },
-    { t: 'arg',s: '  { id: "zerli", depth: "full" }' },
-    { t: 'res',s: '  ↳ legacy audit · phased migration · tenancy', ok: 'ok' },
-    { t: 'sys',s: '▸ render(portfolio)' },
-    { t: 'done',s: '  ↳ 3 systems ready. scroll to inspect.' }
-  ];
-
-  function lineHTML(item) {
-    var cls = item.t === 'arg' ? 'k' : (item.t === 'c' ? 'c' : (item.t === 'res' || item.t === 'done' ? 's' : ''));
-    var tail = item.ok ? ' <span class="ok">✔ ' + item.ok + '</span>' : '';
-    return '<span class="ln ' + cls + '">' + item.s + tail + '</span>';
-  }
-
-  if (reduce) {
-    out.innerHTML = script.map(lineHTML).join('');
-    if (state) state.textContent = 'complete';
-    window.__startTrace = function () {};
-    return;
-  }
-
-  var i = 0;
-  function step() {
-    if (i >= script.length) {
-      if (state) { state.textContent = 'complete'; }
-      var caret = out.querySelector('.caret');
-      if (caret) caret.remove();
-      return;
-    }
-    var caret = out.querySelector('.caret');
-    if (caret) caret.remove();
-    out.insertAdjacentHTML('beforeend', lineHTML(script[i]));
-    out.insertAdjacentHTML('beforeend', '<span class="caret"></span>');
-    i++;
-    setTimeout(step, 90 + Math.random() * 260);
-  }
-
-  // The cold open decides when this runs; without it, start immediately.
-  window.__startTrace = function () { setTimeout(step, 300); };
-})();
-
-/* ---------- Particle field: two phases, one system ----------
-   BANG    — everything starts at the singularity with radial velocity.
-   AMBIENT — the same particles, decelerated, drifting, wired with edges.
-   The background you read the page on is literally the debris.        */
-(function () {
-  var canvas = document.getElementById('field');
-  if (!canvas || !canvas.getContext) { window.__field = { bang: function () {}, ambient: function () {} }; return; }
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    window.__field = { bang: function () {}, ambient: function () {} };
-    return;
-  }
-
-  var ctx = canvas.getContext('2d');
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  var p = [], w = 0, h = 0, raf = null;
-
-  var LINK2 = 26000;          // squared link distance for edges
-  var mode = 'ambient';       // 'bang' | 'ambient'
-  var edgeAlpha = 1;          // ramps 0→1 as matter cools
-  var drag = 1;               // per-frame velocity multiplier
-  var cool = 1;               // 0 = white-hot spectrum, 1 = settled palette
-
-  // White light separates into this on the way out. Debris is prismatic,
-  // then cools back toward the house palette as it settles.
-  var SPECTRUM = [
-    [255, 255, 255], [255, 77, 109], [255, 154, 60], [255, 224, 102],
-    [61, 245, 196], [79, 216, 255], [139, 123, 255], [232, 110, 255]
-  ];
-  var SETTLED = [[139, 123, 255], [61, 245, 196]];
-
-  function count() { return Math.min(64, Math.round((w * h) / 26000)); }
-
-  function seedAmbient() {
-    p = [];
-    for (var i = 0; i < count(); i++) {
-      var t = SETTLED[i % 2];
-      p.push({
-        x: Math.random() * w, y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.16,
-        vy: (Math.random() - 0.5) * 0.16,
-        r: Math.random() * 1.4 + 0.5,
-        s: t, t: t                         // no spectral phase outside a bang
-      });
-    }
-  }
-
-  // Detonate: reseed every particle at the centre with outward velocity.
-  function bang() {
-    if (!w || !h) return;
-    var n = Math.round(count() * 2.0);   // extra debris, culled as it cools
-    p = [];
-    for (var i = 0; i < n; i++) {
-      var ang = Math.random() * Math.PI * 2;
-      // bias toward a shell rather than a uniform disc — reads as a blast
-      var speed = 5.5 + Math.pow(Math.random(), 0.55) * 15;
-      // Fastest debris carries the blue end, slowest the red — the blast
-      // disperses like light through a prism rather than flying out mono.
-      var band = Math.min(SPECTRUM.length - 1,
-                 Math.floor((speed - 5.5) / 15 * SPECTRUM.length));
-      var sc = SPECTRUM[Math.random() < 0.75 ? band : (Math.random() * SPECTRUM.length) | 0];
-      p.push({
-        x: w / 2, y: h / 2,
-        vx: Math.cos(ang) * speed,
-        vy: Math.sin(ang) * speed * 0.82,   // slightly oblate; more cinematic
-        r: Math.random() * 1.8 + 0.4,
-        s: sc,
-        t: SETTLED[i % 2]
-      });
-    }
-    mode = 'bang';
-    edgeAlpha = 0;
-    cool = 0;                            // white-hot; cools over ~3s
-    drag = 0.972;                        // ~1.5s of flight before it cools
-    start();
-  }
-
-  // Cool down into the drifting graph.
-  function ambient() {
-    mode = 'ambient';
-    start();
-  }
-
-  function resize() {
-    w = canvas.clientWidth; h = canvas.clientHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (mode !== 'bang') seedAmbient();
-  }
-
-  function frame() {
-    ctx.clearRect(0, 0, w, h);
-
-    if (mode === 'ambient') {
-      // ease drag back to 1, fade the edges in, and let the colour cool
-      drag += (1 - drag) * 0.04;
-      edgeAlpha += (1 - edgeAlpha) * 0.02;
-      if (cool < 1) cool = Math.min(1, cool + 0.006);
-      // cull surplus debris gradually so we land back at ambient density
-      if (p.length > count() && Math.random() < 0.6) p.pop();
-    }
-
-    var i, n;
-    for (i = 0; i < p.length; i++) {
-      n = p[i];
-      n.x += n.vx; n.y += n.vy;
-      n.vx *= drag; n.vy *= drag;
-
-      // clamp residual drift so particles never freeze completely
-      if (mode === 'ambient') {
-        var sp = Math.abs(n.vx) + Math.abs(n.vy);
-        if (sp < 0.02) {
-          n.vx += (Math.random() - 0.5) * 0.05;
-          n.vy += (Math.random() - 0.5) * 0.05;
-        }
-      }
-
-      if (n.x < -20) n.x = w + 20; if (n.x > w + 20) n.x = -20;
-      if (n.y < -20) n.y = h + 20; if (n.y > h + 20) n.y = -20;
-    }
-
-    // edges — skipped entirely while matter is still flying
-    if (edgeAlpha > 0.02) {
-      for (var a = 0; a < p.length; a++) {
-        for (var b = a + 1; b < p.length; b++) {
-          var dx = p[a].x - p[b].x, dy = p[a].y - p[b].y;
-          var d2 = dx * dx + dy * dy;
-          if (d2 < LINK2) {
-            var al = (1 - d2 / LINK2) * 0.16 * edgeAlpha;
-            ctx.strokeStyle = 'rgba(61,245,196,' + al.toFixed(3) + ')';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(p[a].x, p[a].y);
-            ctx.lineTo(p[b].x, p[b].y);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    // Particles: prismatic while hot, lerping to the house palette as they cool.
-    var alpha = 0.5 + (1 - cool) * 0.42;
-    for (var j = 0; j < p.length; j++) {
-      var q = p[j];
-      var cr = Math.round(q.s[0] + (q.t[0] - q.s[0]) * cool);
-      var cg = Math.round(q.s[1] + (q.t[1] - q.s[1]) * cool);
-      var cb = Math.round(q.s[2] + (q.t[2] - q.s[2]) * cool);
-      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + alpha.toFixed(2) + ')';
-      ctx.beginPath();
-      ctx.arc(q.x, q.y, q.r * (1 + (1 - cool) * 0.5), 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    raf = requestAnimationFrame(frame);
-  }
-
-  function start() { if (!raf) frame(); }
-  function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-
-  resize();
-  start();
-
-  var rt;
-  window.addEventListener('resize', function () {
-    clearTimeout(rt); rt = setTimeout(resize, 180);
-  });
-  document.addEventListener('visibilitychange', function () {
-    document.hidden ? stop() : start();
-  });
-
-  window.__field = { bang: bang, ambient: ambient };
-})();
-
-/* ---------- Cold open: the sequencer ---------- */
-(function () {
-  var scrim  = document.getElementById('intro-scrim');
-  var intro  = document.getElementById('intro');
-  var hero   = document.querySelector('.hero .wrap');
-  if (!scrim || !intro) return;
-
-  /* Set to true to show the cold open only once per browser tab.
-     False (default) replays it on every load — a first-time visitor sees
-     it either way, and this keeps reloads honest while iterating. */
-  var PLAY_ONCE_PER_SESSION = false;
-
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var deepLink = !!location.hash;   // arriving at #tadhkir goes straight there
-  var seen = false;
-  if (PLAY_ONCE_PER_SESSION) {
-    try { seen = sessionStorage.getItem('bang') === '1'; } catch (e) {}
-  }
-
-  var timers = [];
-  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
-
-  // ---- bypass paths: never gate the content ----
-  function bypass() {
-    revealHero(0);
-    if (window.__startTrace) window.__startTrace();
-  }
-
-  function revealHero(delayBase) {
-    document.body.classList.remove('intro-active');
-    if (!hero || reduce) return;
-    var kids = Array.prototype.slice.call(hero.children);
-    kids.forEach(function (el, i) {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(18px)';
-      setTimeout(function () {
-        el.style.transition = 'opacity .8s cubic-bezier(.2,.7,.3,1), transform .8s cubic-bezier(.2,.7,.3,1)';
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-      }, delayBase + i * 110);
-    });
-  }
-
-  if (reduce || deepLink || seen) { bypass(); return; }
-
-  // ---- run it ----
-  if (PLAY_ONCE_PER_SESSION) {
-    try { sessionStorage.setItem('bang', '1'); } catch (e) {}
-  }
-
-  scrim.hidden = false;
-  intro.hidden = false;
-  document.body.classList.add('intro-active');
-
-  // Build the line, word by word / char by char.
-  var l1 = document.getElementById('bang-l1');
-  var l2 = document.getElementById('bang-l2');
-  var words = ['This', 'was', 'made', 'by', 'AI.'];
-  l1.innerHTML = words.map(function (t) { return '<span class="w">' + t + '</span>'; }).join(' ');
-  // Casing is deliberate — leave it exactly as written.
-  var chars = 'EnTiReLy!'.split('');
-  l2.innerHTML = chars.map(function (c, i) {
-    var rot = (i % 2 ? 1 : -1) * (8 + Math.random() * 14);
-    return '<span class="c" style="--r:' + rot.toFixed(1) + 'deg">' + c + '</span>';
-  }).join('');
-
-  // Fragments of the systems, thrown outward onto a ring.
-  var frags = [
-    ['tool_use', 'mint'], ['{ tenant: server }', ''], ['runCopilot()', 'mint'],
-    ['≤ 6 rounds', ''], ['injection: blocked', 'violet'], ['7 agents', 'mint'],
-    ['checkpoint ✔', ''], ['Haiku → Sonnet', 'violet'], ['strict: true', ''],
-    ['self-heal', 'mint'], ['67K LOC', ''], ['ADR-012', 'violet'],
-    ['PostgreSQL', ''], ['aggregates only', 'mint']
-  ];
-  var shards = document.getElementById('shards');
-  var vmin = Math.min(window.innerWidth, window.innerHeight);
-  var narrow = window.innerWidth < 760;
-  frags.forEach(function (f, i) {
-    // spread on a ring, skipping the horizontal band where the copy sits
-    var ang = (i / frags.length) * Math.PI * 2 + 0.35;
-    var band = Math.abs(Math.sin(ang));
-    if (band < 0.42) ang += 0.55;                     // push off the text line
-    var rad = (narrow ? 0.30 : 0.34) * vmin + Math.random() * 0.1 * vmin;
-    var el = document.createElement('span');
-    el.className = 'shard ' + f[1];
-    el.textContent = f[0];
-    el.style.setProperty('--x', (Math.cos(ang) * rad * 1.55).toFixed(0) + 'px');
-    el.style.setProperty('--y', (Math.sin(ang) * rad).toFixed(0) + 'px');
-    el.style.setProperty('--rot', ((Math.random() - 0.5) * 50).toFixed(0) + 'deg');
-    shards.appendChild(el);
-  });
-
-  var shardEls = Array.prototype.slice.call(shards.querySelectorAll('.shard'));
-  var sing = document.getElementById('singularity');
-  var readout = document.getElementById('readout');
-  var copy = document.getElementById('bang-copy');
-  var constellation = document.getElementById('constellation');
-
-  function say(text, hot) {
-    readout.classList.remove('show');
-    setTimeout(function () {
-      readout.textContent = text;
-      readout.classList.toggle('hot', !!hot);
-      readout.classList.add('show');
-    }, 260);
-  }
-
-  function ring(id, dur) {
-    var el = document.getElementById(id);
-    el.style.setProperty('--dur', dur + 'ms');
-    el.classList.add('go');
-  }
-
-  /* Vibration that grows with the mass.
-     Amplitude and frequency both ramp on an ease-in curve, so the shake
-     is imperceptible when compression starts and violent by critical mass.
-     Where the device supports it, the same curve drives real haptics. */
-  var buzzRAF = null;
-  function buzz(fromAmp, toAmp, fromDur, toDur, ms) {
-    var t0 = performance.now();
-    intro.classList.add('tremor');
-    cancelAnimationFrame(buzzRAF);
-    (function tick(now) {
-      var t = Math.min(1, (now - t0) / ms);
-      var e = t * t * t;                                  // ease-in: late escalation
-      var amp = fromAmp + (toAmp - fromAmp) * e;
-      var dur = fromDur + (toDur - fromDur) * e;
-      intro.style.setProperty('--amp', amp.toFixed(2) + 'px');
-      intro.style.setProperty('--tdur', dur.toFixed(0) + 'ms');
-      if (t < 1) buzzRAF = requestAnimationFrame(tick);
-    })(t0);
-  }
-  function buzzStop() {
-    cancelAnimationFrame(buzzRAF);
-    intro.classList.remove('tremor');
-    intro.style.setProperty('--amp', '0px');
-  }
-
-  // Real haptics where available. Silently ignored if the browser
-  // requires a prior user gesture — it's a bonus, never load-bearing.
-  function haptic(pattern) {
-    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
-  }
-
-  // Wire the shards into a constellation once they've all landed.
-  function drawConstellation() {
-    var W = window.innerWidth, H = window.innerHeight;
-    constellation.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    var pts = shardEls.map(function (el) {
-      var r = el.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    });
-    var pairs = [];
-    for (var i = 0; i < pts.length; i++) pairs.push([i, (i + 1) % pts.length]);   // the ring
-    for (var j = 0; j < pts.length; j += 3) pairs.push([j, (j + 5) % pts.length]); // cross-links
-    pairs.forEach(function (pr, k) {
-      var a = pts[pr[0]], b = pts[pr[1]];
-      var len = Math.hypot(b.x - a.x, b.y - a.y);
-      var ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
-      ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
-      ln.style.setProperty('--len', len.toFixed(0));
-      constellation.appendChild(ln);
-      setTimeout(function () { ln.classList.add('draw'); }, k * 55);
-    });
-  }
-
-  /* ================= TIMELINE — six acts, ~12.6s to content =================
-     I   0.0–2.6   the void: scanline, singularity forms and breathes
-     II  2.6–5.4   compression: rings collapse, readout counts down, tremor
-     III 5.4–6.4   detonation: flash, three shockwaves, quake, particles
-     IV  6.4–9.6   matter: shards arrive in waves, then wire together
-     V   9.6–12.0  the statement, the word, the bloom
-     VI  12.0–13.4 recede, cool, hand off to the hero
-     ========================================================================= */
-
-  // ---- ACT I: the void ----
-  at(500,  function () { say('awaiting input'); });
-  at(1600, function () { say('intent received'); });
-
-  // ---- ACT II: compression ----
-  at(2600, function () { say('compressing ten years into one point'); });
-  at(2700, function () { ring('ring1', 2000); });
-  at(3400, function () { ring('ring2', 1700); });
-  at(4100, function () { ring('ring3', 1200); });
-  // vibration begins the instant compression does, and grows for 2.7s
-  at(2700, function () {
-    buzz(0.35, 11, 190, 42, 2700);
-    haptic([8, 260, 12, 220, 18, 180, 26, 140, 40, 100, 60, 70, 90]);
-  });
-  at(4400, function () { say('density rising', true); });
-  at(4900, function () { sing.classList.add('critical'); });
-  at(5200, function () { say('critical mass', true); });
-
-  // ---- ACT III: detonation ----
-  at(5400, function () {
-    buzzStop();
-    intro.classList.add('quake');
-    haptic([180]);
-    readout.classList.remove('show');
-    document.getElementById('flash').classList.add('fire');
-    ['ca-r', 'ca-g', 'ca-b'].forEach(function (id) {
-      document.getElementById(id).classList.add('fire');
-    });
-    document.getElementById('shock1').classList.add('fire');
-    document.getElementById('shock2').classList.add('fire');
-    document.getElementById('shock3').classList.add('fire');
-    sing.classList.remove('critical');
-    sing.classList.add('blown');
-    if (window.__field) window.__field.bang();
-  });
-
-  // ---- ACT IV: matter, in three waves, then wired together ----
-  // The field cools here, not at the handoff — so the background graph
-  // wires itself up at the same moment the shards do.
-  at(6900, function () { if (window.__field) window.__field.ambient(); });
-  at(6400, function () { shardEls.slice(0, 5).forEach(popAfter); });
-  at(7300, function () { shardEls.slice(5, 10).forEach(popAfter); });
-  at(8100, function () { shardEls.slice(10).forEach(popAfter); });
-  at(9200, drawConstellation);
-
-  function popAfter(el, i) {
-    setTimeout(function () { el.classList.add('pop'); }, i * 110);
-  }
-
-  // ---- ACT V: the statement ----
-  at(10200, function () {                                // matter recedes for the copy
-    constellation.classList.add('dim');
-    shardEls.forEach(function (el) {
-      el.style.transition = 'opacity 900ms ease';
-      el.style.opacity = '0.3';
-    });
-  });
-  at(10400, function () {
-    l1.querySelectorAll('.w').forEach(function (el, i) {
-      setTimeout(function () { el.classList.add('in'); }, i * 165);
-    });
-  });
-  at(11900, function () {                                // the word
-    l2.querySelectorAll('.c').forEach(function (el, i) {
-      setTimeout(function () { el.classList.add('in'); }, i * 85);
-    });
-  });
-  at(13500, function () { l2.classList.add('bloom'); }); // the pulse
-
-  // ---- ACT VI: handoff ----
-  at(14300, function () { copy.classList.add('recede'); });
-  at(15000, end);
-
-  document.getElementById('skip-intro').addEventListener('click', end);
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') end();
-  });
-
-  var ended = false;
-  function end() {
-    if (ended) return;
-    ended = true;
-    timers.forEach(clearTimeout);
-    buzzStop();
-    haptic(0);
-
-    if (window.__field) window.__field.ambient();
-
-    scrim.classList.add('out');
-    intro.classList.add('out');
-    revealHero(220);
-
-    setTimeout(function () {
-      intro.hidden = true; scrim.hidden = true;
-      intro.remove(); scrim.remove();
-    }, 850);
-
-    setTimeout(function () { if (window.__startTrace) window.__startTrace(); }, 900);
-  }
-
-  // Let anyone replay it from the colophon.
-  window.__replayIntro = function () {
-    try { sessionStorage.removeItem('bang'); } catch (e) {}
-    location.hash = '';
-    location.reload();
-  };
-})();
-</script>
 
 </body>
 </html>

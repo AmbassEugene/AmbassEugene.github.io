@@ -1,0 +1,101 @@
+/**
+ * base.css — reset, document defaults, element typography, accessibility.
+ *
+ * Only bare element selectors and global concerns belong here. Anything with
+ * a class name is a component and lives in components.css.
+ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--grotesk);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; }
+
+::selection {
+  background: var(--mint);
+  color: var(--void);
+}
+
+/* ---- Prose ---- */
+
+p {
+  margin: 0 0 1.15rem;
+  color: var(--body);
+}
+
+strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+em { color: var(--text); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  color: var(--mint);
+  background: rgba(61, 245, 196, 0.07);
+  border: 1px solid rgba(61, 245, 196, 0.16);
+  border-radius: 3px;
+  padding: 0.08em 0.34em;
+  white-space: nowrap;
+}
+
+/* ---- Accessibility ---- */
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.skip:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: var(--z-skip);
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  border: 1px solid var(--mint);
+  color: var(--mint);
+  border-radius: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/**
+ * Reduced motion is a hard stop, not a softening: every animation and
+ * transition is cancelled and the canvas is removed from the page.
+ * The cold open is additionally skipped in JS — see assets/js/env.js.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  #field { display: none; }
+}

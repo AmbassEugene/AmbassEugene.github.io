@@ -1,0 +1,63 @@
+/**
+ * tokens.css — design tokens.
+ *
+ * The single source of truth for colour, type and spacing. Nothing in this
+ * file selects an element; every other stylesheet consumes these and no
+ * stylesheet hard-codes a palette value that exists here.
+ *
+ * The surface commits to dark deliberately (see docs/adr/0004-committed-dark-theme.md),
+ * so there is one palette rather than a light/dark pair.
+ */
+
+:root {
+  /* ---- Surface ---- */
+  --void:    #05070A;   /* page ground, and the colour of the cold open */
+  --ink:     #0A0E13;   /* raised panels sitting on the ground */
+  --panel:   rgba(255, 255, 255, 0.035);
+  --panel-2: rgba(255, 255, 255, 0.06);
+  --edge:    rgba(255, 255, 255, 0.10);
+  --edge-2:  rgba(255, 255, 255, 0.18);
+
+  /* ---- Content ---- */
+  --text:  #E8F0ED;
+  --body:  #C9D6D2;   /* long-form prose: one step down from --text */
+  --dim:   #7E8E8B;
+  --faint: #4A5754;
+
+  /* ---- Accent ----
+     Both accents are endpoints of the cold-open spectrum: the debris cools
+     to exactly these two values. See assets/js/config.js → FIELD.settled. */
+  --mint:   #3DF5C4;
+  --mint-2: #7BFFDA;   /* hover lift only */
+  --violet: #8B7BFF;
+
+  /* ---- Type ----
+     System stacks only. No webfonts means no third-party request, no layout
+     shift on load, and nothing to fail closed. */
+  --grotesk: "Helvetica Neue", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* ---- Measure & rhythm ---- */
+  --measure: 66ch;                        /* prose line length */
+  --shell:   78rem;                       /* outer content width */
+  --pad:     clamp(1.25rem, 4vw, 4rem);   /* gutter */
+  --section: clamp(4.5rem, 11vh, 8rem);   /* vertical section rhythm */
+
+  /* ---- Motion ----
+     Named curves so easing is consistent and reviewable in one place. */
+  --ease-out:  cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-in:   cubic-bezier(0.55, 0, 0.85, 0.35);
+  --ease-pop:  cubic-bezier(0.16, 1.5, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Stacking ----
+     Declared together so layer conflicts are visible rather than discovered. */
+  --z-field:  0;
+  --z-vignette: 1;
+  --z-grain:  2;
+  --z-stage:  3;
+  --z-scrim:  50;
+  --z-field-lifted: 55;   /* the field rises above the scrim during the bang */
+  --z-intro:  60;
+  --z-skip:   99;
+}

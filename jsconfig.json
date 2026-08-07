@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/jsconfig.json",
+  "//": "Type-checks the JSDoc annotations without introducing a build step. No TypeScript is emitted; tsc is used purely as a checker. See docs/adr/0001-no-build-step.md.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "checkJs": true,
+    "allowJs": true,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["assets/js/**/*.js"]
+}

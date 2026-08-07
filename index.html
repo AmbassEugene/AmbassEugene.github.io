@@ -1295,10 +1295,17 @@ document.documentElement.classList.add('js');
   var hero   = document.querySelector('.hero .wrap');
   if (!scrim || !intro) return;
 
+  /* Set to true to show the cold open only once per browser tab.
+     False (default) replays it on every load — a first-time visitor sees
+     it either way, and this keeps reloads honest while iterating. */
+  var PLAY_ONCE_PER_SESSION = false;
+
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var deepLink = !!location.hash;
+  var deepLink = !!location.hash;   // arriving at #tadhkir goes straight there
   var seen = false;
-  try { seen = sessionStorage.getItem('bang') === '1'; } catch (e) {}
+  if (PLAY_ONCE_PER_SESSION) {
+    try { seen = sessionStorage.getItem('bang') === '1'; } catch (e) {}
+  }
 
   var timers = [];
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
@@ -1327,7 +1334,9 @@ document.documentElement.classList.add('js');
   if (reduce || deepLink || seen) { bypass(); return; }
 
   // ---- run it ----
-  try { sessionStorage.setItem('bang', '1'); } catch (e) {}
+  if (PLAY_ONCE_PER_SESSION) {
+    try { sessionStorage.setItem('bang', '1'); } catch (e) {}
+  }
 
   scrim.hidden = false;
   intro.hidden = false;

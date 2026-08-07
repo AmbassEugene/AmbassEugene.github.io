@@ -81,6 +81,188 @@ a { color: inherit; }
 .stage { position: relative; z-index: 3; }
 
 /* ============================================================
+   COLD OPEN — singularity → bang → matter → line → handoff
+   The debris from the bang IS the ambient field. Same particles.
+   ============================================================ */
+
+/* During the intro the canvas is lifted above the scrim so the
+   explosion is visible; afterwards it drops back to z-index 0. */
+body.intro-active { overflow: hidden; }
+body.intro-active #field { z-index: 55; opacity: 1; }
+
+.intro-scrim {
+  position: fixed; inset: 0; z-index: 50;
+  background: var(--void);
+  pointer-events: none;
+}
+
+#intro {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  overflow: hidden;
+  text-align: center;
+}
+
+.intro-scrim.out, #intro.out {
+  opacity: 0;
+  transition: opacity 0.75s cubic-bezier(.4,0,.2,1);
+}
+
+/* --- the singularity: one point, tightening --- */
+.singularity {
+  position: absolute; top: 50%; left: 50%;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 18px 6px rgba(61,245,196,0.85), 0 0 60px 20px rgba(139,123,255,0.35);
+  transform: scale(0);
+  animation: singularity-in 700ms cubic-bezier(.6,0,.9,.2) forwards;
+}
+@keyframes singularity-in {
+  0%   { transform: scale(0); opacity: 0; }
+  55%  { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(0.55); opacity: 1; }
+}
+.singularity.blown { animation: singularity-out 500ms ease-out forwards; }
+@keyframes singularity-out {
+  0%   { transform: scale(0.55); opacity: 1; }
+  30%  { transform: scale(9); opacity: 1; }
+  100% { transform: scale(26); opacity: 0; }
+}
+
+/* the collapsing ring that precedes detonation */
+.collapse-ring {
+  position: absolute; top: 50%; left: 50%;
+  width: 60vmin; height: 60vmin; margin: -30vmin 0 0 -30vmin;
+  border: 1px solid rgba(61,245,196,0.5);
+  border-radius: 50%;
+  transform: scale(1); opacity: 0;
+  animation: collapse 700ms cubic-bezier(.7,0,.9,.3) forwards;
+}
+@keyframes collapse {
+  0%   { transform: scale(1.6) rotate(0deg); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: scale(0.02) rotate(90deg); opacity: 0; }
+}
+
+/* --- detonation --- */
+.flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(61,245,196,0.5) 35%, transparent 70%);
+  opacity: 0; pointer-events: none;
+}
+.flash.fire { animation: flash 620ms cubic-bezier(.1,.8,.3,1) forwards; }
+@keyframes flash {
+  0%   { opacity: 0; transform: scale(0.15); }
+  12%  { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+
+.shock {
+  position: absolute; top: 50%; left: 50%;
+  width: 20vmin; height: 20vmin; margin: -10vmin 0 0 -10vmin;
+  border: 2px solid rgba(61,245,196,0.85);
+  border-radius: 50%;
+  opacity: 0;
+}
+.shock.fire { animation: shock 1100ms cubic-bezier(.15,.85,.25,1) forwards; }
+.shock.s2.fire { animation-delay: 130ms; border-color: rgba(139,123,255,0.7); }
+@keyframes shock {
+  0%   { transform: scale(0.1); opacity: 1; border-width: 3px; }
+  100% { transform: scale(11); opacity: 0; border-width: 0.5px; }
+}
+
+/* --- matter: fragments popping into existence --- */
+.shards { position: absolute; inset: 0; pointer-events: none; }
+.shard {
+  position: absolute; top: 50%; left: 50%;
+  font-family: var(--mono);
+  font-size: clamp(0.6rem, 0.52rem + 0.35vw, 0.82rem);
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  border: 1px solid var(--edge);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-radius: 3px;
+  padding: 0.28rem 0.6rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+}
+.shard.mint { color: var(--mint); border-color: rgba(61,245,196,0.3); background: rgba(61,245,196,0.06); }
+.shard.violet { color: var(--violet); border-color: rgba(139,123,255,0.3); background: rgba(139,123,255,0.06); }
+.shard.pop { animation: shard-pop 900ms cubic-bezier(.16,1.3,.3,1) forwards; }
+@keyframes shard-pop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) translate(0,0) scale(0.15) rotate(var(--rot)); }
+  45%  { opacity: 1; }
+  70%  { transform: translate(-50%,-50%) translate(var(--x), var(--y)) scale(1.09) rotate(0deg); }
+  100% { opacity: 1; transform: translate(-50%,-50%) translate(var(--x), var(--y)) scale(1) rotate(0deg); }
+}
+
+/* --- the line --- */
+.bang-copy { position: relative; z-index: 2; padding-inline: 1.25rem; }
+
+.bang-l1 {
+  font-size: clamp(1.5rem, 1rem + 3.2vw, 3.6rem);
+  font-weight: 500; letter-spacing: -0.03em; line-height: 1.1;
+  margin: 0 0 0.25em; color: var(--text);
+}
+.bang-l1 .w {
+  display: inline-block; opacity: 0;
+  transform: translateY(0.55em) scale(0.94); filter: blur(6px);
+}
+.bang-l1 .w.in {
+  animation: word-in 620ms cubic-bezier(.18,.9,.25,1) forwards;
+}
+@keyframes word-in {
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.bang-l2 {
+  font-size: clamp(2.6rem, 1.2rem + 9vw, 9rem);
+  font-weight: 700; line-height: 0.92; letter-spacing: -0.055em;
+  margin: 0; color: var(--mint);
+  text-shadow: 0 0 42px rgba(61,245,196,0.45);
+}
+.bang-l2 .c {
+  display: inline-block; opacity: 0;
+  transform: translateY(0.4em) scale(0.3) rotate(var(--r));
+}
+.bang-l2 .c.in { animation: char-pop 700ms cubic-bezier(.16,1.5,.3,1) forwards; }
+@keyframes char-pop {
+  0%   { opacity: 0; transform: translateY(0.4em) scale(0.3) rotate(var(--r)); }
+  60%  { opacity: 1; transform: translateY(-0.06em) scale(1.16) rotate(0deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* --- skip --- */
+.skip-intro {
+  position: absolute; bottom: 2rem; right: 2rem; z-index: 3;
+  font-family: var(--mono); font-size: 0.68rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--faint); background: transparent;
+  border: 1px solid var(--edge); border-radius: 3px;
+  padding: 0.6rem 1.1rem; cursor: pointer;
+  transition: color .2s, border-color .2s;
+  opacity: 0; animation: fade-in 400ms ease 400ms forwards;
+}
+.skip-intro:hover { color: var(--mint); border-color: var(--mint); }
+@keyframes fade-in { to { opacity: 1; } }
+
+/* hero waits for the handoff */
+body.intro-active .hero .wrap > * { opacity: 0; }
+
+.replay {
+  font-family: var(--mono); font-size: 0.68rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint); background: transparent;
+  border: 1px solid var(--edge); border-radius: 3px;
+  padding: 0.5rem 0.95rem; cursor: pointer; margin-top: 1.5rem;
+  transition: color .2s, border-color .2s;
+}
+.replay:hover { color: var(--mint); border-color: var(--mint); }
+
+/* ============================================================
    SHARED
    ============================================================ */
 .wrap { max-width: 78rem; margin: 0 auto; padding-inline: var(--pad); }
@@ -419,6 +601,27 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
 <div class="vignette" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 
+<!-- ================= COLD OPEN =================
+     Purely decorative. The full page exists in the DOM beneath this;
+     the overlay is aria-hidden, skippable, auto-bypassed on deep links,
+     and never rendered under prefers-reduced-motion. -->
+<div class="intro-scrim" id="intro-scrim" aria-hidden="true" hidden></div>
+<div id="intro" aria-hidden="true" hidden>
+  <div class="collapse-ring" id="ring"></div>
+  <div class="singularity" id="singularity"></div>
+  <div class="flash" id="flash"></div>
+  <div class="shock" id="shock1"></div>
+  <div class="shock s2" id="shock2"></div>
+  <div class="shards" id="shards"></div>
+
+  <div class="bang-copy">
+    <p class="bang-l1" id="bang-l1"></p>
+    <p class="bang-l2" id="bang-l2"></p>
+  </div>
+
+  <button class="skip-intro" id="skip-intro" type="button">Skip intro</button>
+</div>
+
 <div class="stage">
 
 <!-- ================= HERO ================= -->
@@ -428,8 +631,8 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
 
     <h1>Ambassador<span class="l2">Eugene</span></h1>
 
-    <p class="thesis">This entire page was built with AI. <b>So was everything on it.</b></p>
-    <p class="thesis thesis-sub">Ten years shipping production React, React Native and Node. Now building the agent systems underneath — bounded tool loops, structural guardrails, multi-model routing, durable orchestration. Not prompts. Infrastructure.</p>
+    <p class="thesis">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
+    <p class="thesis thesis-sub">Ten years shipping React, React Native and Node. The last two building the layer underneath the demos: bounded tool loops, guardrails enforced by the call graph rather than the prompt, multi-model routing, durable orchestration. The model writes fast. I decide what it's allowed to touch, what gets enforced structurally, and what ships. Three systems below — each with the decision that carried it.</p>
 
     <div class="trace" role="img" aria-label="Simulated agent trace showing this portfolio being assembled: loading candidate profile, three case studies, and rendering the page.">
       <div class="trace-bar">
@@ -662,6 +865,8 @@ footer.foot a:hover { color: var(--mint); border-bottom-color: var(--mint); }
     <div class="col">
       <p>Every system documented above was built by pair-programming with frontier models under a written engineering standard: conventional commits, ADRs for significant decisions, CI gates on lint, typecheck and coverage, and a security audit before launch rather than after.</p>
       <p>That's the actual claim. Not that AI wrote some code — anyone can get that. It's that the output holds up to the same review a hand-written system gets, because the judgement about <em>what to build, what to trust the model with, and what to enforce structurally</em> stayed with the engineer. This page is the smallest example: one hand-directed HTML file, no framework, no build step, no third-party requests.</p>
+      <p>The particles drifting behind this page are the debris from the explosion that opened it — same system, cooled down. Nothing here is stock.</p>
+      <button class="replay" type="button" onclick="window.__replayIntro &amp;&amp; window.__replayIntro()">↻ Replay the opening</button>
     </div>
   </div>
 
@@ -748,6 +953,7 @@ document.documentElement.classList.add('js');
   if (reduce) {
     out.innerHTML = script.map(lineHTML).join('');
     if (state) state.textContent = 'complete';
+    window.__startTrace = function () {};
     return;
   }
 
@@ -766,27 +972,38 @@ document.documentElement.classList.add('js');
     i++;
     setTimeout(step, 90 + Math.random() * 260);
   }
-  setTimeout(step, 450);
+
+  // The cold open decides when this runs; without it, start immediately.
+  window.__startTrace = function () { setTimeout(step, 300); };
 })();
 
-/* ---------- Generative field: drifting nodes + edges ---------- */
+/* ---------- Particle field: two phases, one system ----------
+   BANG    — everything starts at the singularity with radial velocity.
+   AMBIENT — the same particles, decelerated, drifting, wired with edges.
+   The background you read the page on is literally the debris.        */
 (function () {
   var canvas = document.getElementById('field');
-  if (!canvas || !canvas.getContext) return;
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!canvas || !canvas.getContext) { window.__field = { bang: function () {}, ambient: function () {} }; return; }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.__field = { bang: function () {}, ambient: function () {} };
+    return;
+  }
 
   var ctx = canvas.getContext('2d');
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  var nodes = [], w = 0, h = 0, raf = null;
+  var p = [], w = 0, h = 0, raf = null;
 
-  function resize() {
-    w = canvas.clientWidth; h = canvas.clientHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var target = Math.min(64, Math.round((w * h) / 26000));
-    nodes = [];
-    for (var i = 0; i < target; i++) {
-      nodes.push({
+  var LINK2 = 26000;          // squared link distance for edges
+  var mode = 'ambient';       // 'bang' | 'ambient'
+  var edgeAlpha = 1;          // ramps 0→1 as matter cools
+  var drag = 1;               // per-frame velocity multiplier
+
+  function count() { return Math.min(64, Math.round((w * h) / 26000)); }
+
+  function seedAmbient() {
+    p = [];
+    for (var i = 0; i < count(); i++) {
+      p.push({
         x: Math.random() * w, y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.16,
         vy: (Math.random() - 0.5) * 0.16,
@@ -795,39 +1012,96 @@ document.documentElement.classList.add('js');
     }
   }
 
+  // Detonate: reseed every particle at the centre with outward velocity.
+  function bang() {
+    if (!w || !h) return;
+    var n = Math.round(count() * 2.6);   // extra debris, culled as it cools
+    p = [];
+    for (var i = 0; i < n; i++) {
+      var ang = Math.random() * Math.PI * 2;
+      // bias toward a shell rather than a uniform disc — reads as a blast
+      var speed = 5.5 + Math.pow(Math.random(), 0.55) * 15;
+      p.push({
+        x: w / 2, y: h / 2,
+        vx: Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed * 0.82,   // slightly oblate; more cinematic
+        r: Math.random() * 1.8 + 0.4
+      });
+    }
+    mode = 'bang';
+    edgeAlpha = 0;
+    drag = 0.955;
+    start();
+  }
+
+  // Cool down into the drifting graph.
+  function ambient() {
+    mode = 'ambient';
+    start();
+  }
+
+  function resize() {
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (mode !== 'bang') seedAmbient();
+  }
+
   function frame() {
     ctx.clearRect(0, 0, w, h);
 
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i];
+    if (mode === 'ambient') {
+      // ease drag back to 1 and fade the edges in as things settle
+      drag += (1 - drag) * 0.04;
+      edgeAlpha += (1 - edgeAlpha) * 0.02;
+      // cull surplus debris gradually so we land back at ambient density
+      if (p.length > count() && Math.random() < 0.35) p.pop();
+    }
+
+    var i, n;
+    for (i = 0; i < p.length; i++) {
+      n = p[i];
       n.x += n.vx; n.y += n.vy;
+      n.vx *= drag; n.vy *= drag;
+
+      // clamp residual drift so particles never freeze completely
+      if (mode === 'ambient') {
+        var sp = Math.abs(n.vx) + Math.abs(n.vy);
+        if (sp < 0.02) {
+          n.vx += (Math.random() - 0.5) * 0.05;
+          n.vy += (Math.random() - 0.5) * 0.05;
+        }
+      }
+
       if (n.x < -20) n.x = w + 20; if (n.x > w + 20) n.x = -20;
       if (n.y < -20) n.y = h + 20; if (n.y > h + 20) n.y = -20;
     }
 
-    // edges
-    for (var a = 0; a < nodes.length; a++) {
-      for (var b = a + 1; b < nodes.length; b++) {
-        var dx = nodes[a].x - nodes[b].x, dy = nodes[a].y - nodes[b].y;
-        var d2 = dx * dx + dy * dy;
-        if (d2 < 26000) {
-          var alpha = (1 - d2 / 26000) * 0.16;
-          ctx.strokeStyle = 'rgba(61,245,196,' + alpha.toFixed(3) + ')';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(nodes[a].x, nodes[a].y);
-          ctx.lineTo(nodes[b].x, nodes[b].y);
-          ctx.stroke();
+    // edges — skipped entirely while matter is still flying
+    if (edgeAlpha > 0.02) {
+      for (var a = 0; a < p.length; a++) {
+        for (var b = a + 1; b < p.length; b++) {
+          var dx = p[a].x - p[b].x, dy = p[a].y - p[b].y;
+          var d2 = dx * dx + dy * dy;
+          if (d2 < LINK2) {
+            var al = (1 - d2 / LINK2) * 0.16 * edgeAlpha;
+            ctx.strokeStyle = 'rgba(61,245,196,' + al.toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p[a].x, p[a].y);
+            ctx.lineTo(p[b].x, p[b].y);
+            ctx.stroke();
+          }
         }
       }
     }
 
-    // nodes
-    for (var j = 0; j < nodes.length; j++) {
-      var p = nodes[j];
-      ctx.fillStyle = 'rgba(139,123,255,0.5)';
+    var hot = mode === 'bang';
+    for (var j = 0; j < p.length; j++) {
+      var q = p[j];
+      ctx.fillStyle = hot ? 'rgba(61,245,196,0.85)' : 'rgba(139,123,255,0.5)';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y, q.r, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -842,11 +1116,163 @@ document.documentElement.classList.add('js');
 
   var rt;
   window.addEventListener('resize', function () {
-    clearTimeout(rt); rt = setTimeout(function () { resize(); }, 180);
+    clearTimeout(rt); rt = setTimeout(resize, 180);
   });
   document.addEventListener('visibilitychange', function () {
     document.hidden ? stop() : start();
   });
+
+  window.__field = { bang: bang, ambient: ambient };
+})();
+
+/* ---------- Cold open: the sequencer ---------- */
+(function () {
+  var scrim  = document.getElementById('intro-scrim');
+  var intro  = document.getElementById('intro');
+  var hero   = document.querySelector('.hero .wrap');
+  if (!scrim || !intro) return;
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var deepLink = !!location.hash;
+  var seen = false;
+  try { seen = sessionStorage.getItem('bang') === '1'; } catch (e) {}
+
+  var timers = [];
+  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+
+  // ---- bypass paths: never gate the content ----
+  function bypass() {
+    revealHero(0);
+    if (window.__startTrace) window.__startTrace();
+  }
+
+  function revealHero(delayBase) {
+    document.body.classList.remove('intro-active');
+    if (!hero || reduce) return;
+    var kids = Array.prototype.slice.call(hero.children);
+    kids.forEach(function (el, i) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(18px)';
+      setTimeout(function () {
+        el.style.transition = 'opacity .8s cubic-bezier(.2,.7,.3,1), transform .8s cubic-bezier(.2,.7,.3,1)';
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      }, delayBase + i * 110);
+    });
+  }
+
+  if (reduce || deepLink || seen) { bypass(); return; }
+
+  // ---- run it ----
+  try { sessionStorage.setItem('bang', '1'); } catch (e) {}
+
+  scrim.hidden = false;
+  intro.hidden = false;
+  document.body.classList.add('intro-active');
+
+  // Build the line, word by word / char by char.
+  var l1 = document.getElementById('bang-l1');
+  var l2 = document.getElementById('bang-l2');
+  var words = ['This', 'was', 'made', 'by', 'AI.'];
+  l1.innerHTML = words.map(function (t) { return '<span class="w">' + t + '</span>'; }).join(' ');
+  // Casing is deliberate — leave it exactly as written.
+  var chars = 'EnTiReLy!'.split('');
+  l2.innerHTML = chars.map(function (c, i) {
+    var rot = (i % 2 ? 1 : -1) * (8 + Math.random() * 14);
+    return '<span class="c" style="--r:' + rot.toFixed(1) + 'deg">' + c + '</span>';
+  }).join('');
+
+  // Fragments of the systems, thrown outward onto a ring.
+  var frags = [
+    ['tool_use', 'mint'], ['{ tenant: server }', ''], ['runCopilot()', 'mint'],
+    ['≤ 6 rounds', ''], ['injection: blocked', 'violet'], ['7 agents', 'mint'],
+    ['checkpoint ✔', ''], ['Haiku → Sonnet', 'violet'], ['strict: true', ''],
+    ['self-heal', 'mint'], ['67K LOC', ''], ['ADR-012', 'violet'],
+    ['PostgreSQL', ''], ['aggregates only', 'mint']
+  ];
+  var shards = document.getElementById('shards');
+  var vmin = Math.min(window.innerWidth, window.innerHeight);
+  var narrow = window.innerWidth < 760;
+  frags.forEach(function (f, i) {
+    // spread on a ring, skipping the horizontal band where the copy sits
+    var ang = (i / frags.length) * Math.PI * 2 + 0.35;
+    var band = Math.abs(Math.sin(ang));
+    if (band < 0.42) ang += 0.55;                     // push off the text line
+    var rad = (narrow ? 0.30 : 0.34) * vmin + Math.random() * 0.1 * vmin;
+    var el = document.createElement('span');
+    el.className = 'shard ' + f[1];
+    el.textContent = f[0];
+    el.style.setProperty('--x', (Math.cos(ang) * rad * 1.55).toFixed(0) + 'px');
+    el.style.setProperty('--y', (Math.sin(ang) * rad).toFixed(0) + 'px');
+    el.style.setProperty('--rot', ((Math.random() - 0.5) * 50).toFixed(0) + 'deg');
+    shards.appendChild(el);
+  });
+
+  var shardEls = shards.querySelectorAll('.shard');
+
+  // ---------- timeline ----------
+  // 0–700    singularity tightens, ring collapses
+  at(690, function () {                                 // 690  DETONATION
+    document.getElementById('flash').classList.add('fire');
+    document.getElementById('shock1').classList.add('fire');
+    document.getElementById('shock2').classList.add('fire');
+    document.getElementById('singularity').classList.add('blown');
+    if (window.__field) window.__field.bang();
+  });
+
+  at(950, function () {                                 // 950  matter condenses
+    shardEls.forEach(function (el, i) {
+      setTimeout(function () { el.classList.add('pop'); }, i * 42);
+    });
+  });
+
+  at(1350, function () {                                // 1350 the statement
+    l1.querySelectorAll('.w').forEach(function (el, i) {
+      setTimeout(function () { el.classList.add('in'); }, i * 95);
+    });
+  });
+
+  at(1980, function () {                                // 1980 ENTIRELY
+    l2.querySelectorAll('.c').forEach(function (el, i) {
+      setTimeout(function () { el.classList.add('in'); }, i * 58);
+    });
+  });
+
+  at(2600, function () { if (window.__field) window.__field.ambient(); }); // matter cools
+
+  at(3450, end);                                        // 3450 handoff
+
+  document.getElementById('skip-intro').addEventListener('click', end);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') end();
+  });
+
+  var ended = false;
+  function end() {
+    if (ended) return;
+    ended = true;
+    timers.forEach(clearTimeout);
+
+    if (window.__field) window.__field.ambient();
+
+    scrim.classList.add('out');
+    intro.classList.add('out');
+    revealHero(220);
+
+    setTimeout(function () {
+      intro.hidden = true; scrim.hidden = true;
+      intro.remove(); scrim.remove();
+    }, 850);
+
+    setTimeout(function () { if (window.__startTrace) window.__startTrace(); }, 900);
+  }
+
+  // Let anyone replay it from the colophon.
+  window.__replayIntro = function () {
+    try { sessionStorage.removeItem('bang'); } catch (e) {}
+    location.hash = '';
+    location.reload();
+  };
 })();
 </script>
 

@@ -154,8 +154,9 @@ Jekyll processing, which the site does not need.
 
 ## Source of truth for content
 
-Long-form case studies live in [`../write-ups/`](../write-ups/) as Markdown and
-are the canonical text. Edit those first, then port changes here.
+The long-form case studies are maintained as Markdown outside this repository
+and are the canonical text; `index.html` is a port of them. Edit the Markdown
+first, then bring the change across — not the other way round.
 
 ## Licence
 

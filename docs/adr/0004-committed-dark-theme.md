@@ -33,7 +33,7 @@ single-page document. The honest choice is to commit and say why.
 require dropping or redesigning the cold open in light mode.
 
 **Light theme for print only.** Partially adopted in spirit — but the page is
-not designed to be printed; the CV in `../cv/` is the printable artefact.
+not designed to be printed; the downloadable CV is the printable artefact.
 
 ## Consequences
 

@@ -46,7 +46,7 @@ times.
 
 **Good.** The page is complete and readable with JavaScript disabled, blocked
 or failed. Content is diffable in review — a prose change shows as a prose
-change. The `.md` case studies in `../write-ups/` and the HTML stay comparable.
+change. The Markdown originals and the HTML stay diffable against each other.
 
 **Bad.** Editing shared case-study structure means three edits. Accepted: the
 structure has been stable across several revisions, and a mistake in one is

@@ -561,7 +561,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ============================================================ */
 
 .shard.is-shattering {
-  animation: shard-shatter calc(520ms * var(--tempo)) cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+  animation: shard-shatter calc(700ms * var(--tempo)) cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
 }
 @keyframes shard-shatter {
   0% {
@@ -585,7 +585,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 }
 
 .shard.is-reforming {
-  animation: shard-reform calc(520ms * var(--tempo)) var(--ease-pop) forwards;
+  animation: shard-reform calc(700ms * var(--tempo)) var(--ease-pop) forwards;
 }
 @keyframes shard-reform {
   0% {

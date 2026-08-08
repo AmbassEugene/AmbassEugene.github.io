@@ -156,6 +156,8 @@ export function createShardBurst(container, svg) {
   /** @type {number[]} */
   let cycleTimers = [];
   let cycling = false;
+  /** How many fragments are mid-shatter right now. */
+  let mutating = 0;
 
   /** @returns {string} A label not currently displayed. */
   function nextLabel() {
@@ -167,26 +169,35 @@ export function createShardBurst(container, svg) {
 
   /** @param {HTMLElement} shard */
   function shatter(shard) {
+    mutating += 1;
     shard.classList.add('is-shattering');
+
     cycleTimers.push(window.setTimeout(() => {
       shard.textContent = nextLabel();
       shard.classList.remove('is-shattering');
       shard.classList.add('is-reforming');
-      cycleTimers.push(window.setTimeout(
-        () => shard.classList.remove('is-reforming'),
-        FRAGMENT_CYCLE.shatterDuration
-      ));
+
+      cycleTimers.push(window.setTimeout(() => {
+        shard.classList.remove('is-reforming');
+        mutating -= 1;
+      }, FRAGMENT_CYCLE.shatterDuration));
     }, FRAGMENT_CYCLE.shatterDuration));
   }
 
-  /** @param {HTMLElement} shard */
+  /**
+   * Long random delays still cluster, so a fragment whose turn arrives while
+   * another is mid-shatter waits rather than doubling up. The field never has
+   * more than `maxConcurrent` things moving in it.
+   *
+   * @param {HTMLElement} shard
+   */
   function scheduleCycle(shard) {
-    const { minDelay, maxDelay } = FRAGMENT_CYCLE;
+    const { minDelay, maxDelay, maxConcurrent } = FRAGMENT_CYCLE;
     const delay = minDelay + Math.random() * (maxDelay - minDelay);
 
     cycleTimers.push(window.setTimeout(() => {
       if (!cycling) return;
-      shatter(shard);
+      if (mutating < maxConcurrent) shatter(shard);
       scheduleCycle(shard);
     }, delay));
   }
@@ -199,6 +210,7 @@ export function createShardBurst(container, svg) {
 
   function stopCycling() {
     cycling = false;
+    mutating = 0;
     cycleTimers.forEach(window.clearTimeout);
     cycleTimers = [];
     for (const shard of elements) {

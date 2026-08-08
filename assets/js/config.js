@@ -131,13 +131,16 @@ export const HANDOFF = paced({
  *
  * Deliberately *not* scaled by TEMPO — this is prose being read, not motion
  * being watched, so it is set from reading speed rather than from the pace of
- * the sequence around it. Comfortable prose reading is roughly 25 characters
- * per second; 38ms per character lands just under that, which leaves the
- * reader slightly ahead of the cursor rather than chasing it.
+ * the sequence around it. Retiming the sequence can never make the prose
+ * unreadable.
+ *
+ * Average adult prose reading is roughly 20 characters per second. 55ms puts
+ * the cursor at about 18, deliberately *below* that: the reader should always
+ * be waiting slightly on the line rather than chasing it.
  */
 export const BIO = Object.freeze({
-  charDelay: 38,
-  pauseOnPunctuation: 260
+  charDelay: 55,
+  pauseOnPunctuation: 300
 });
 
 /** Skim / full reading modes. */
@@ -255,12 +258,26 @@ export const FRAGMENT_POOL = Object.freeze([
   'audited pre-launch', 'no secrets in git'
 ]);
 
-/** How often a fragment shatters and comes back carrying something else. */
-export const FRAGMENT_CYCLE = paced({
-  minDelay: 1400,
-  maxDelay: 4200,
-  /** Must match the shatter animation in cold-open.css, which scales too. */
-  shatterDuration: 520
+/**
+ * How often a fragment shatters and comes back carrying something else.
+ *
+ * Per-fragment delays are long because there are fourteen of them: at 1.4–4.2s
+ * each, the field as a whole mutated roughly every 250ms, which read as noise
+ * and pulled the eye off the copy. At these delays it is about one every two
+ * and a half seconds — ambient rather than animated.
+ *
+ * `maxConcurrent` is the part that actually stops it feeling busy. Long random
+ * delays still cluster; capping simultaneous mutations guarantees the field
+ * never has more than one thing moving in it.
+ */
+export const FRAGMENT_CYCLE = Object.freeze({
+  ...paced({
+    minDelay: 16000,
+    maxDelay: 38000,
+    /** Must match the shatter animation in cold-open.css, which scales too. */
+    shatterDuration: 700
+  }),
+  maxConcurrent: 1
 });
 
 /**

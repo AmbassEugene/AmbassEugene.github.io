@@ -90,7 +90,34 @@ export const CADENCE = Object.freeze({
 export const HANDOFF = Object.freeze({
   heroDelay: 220,
   removeOverlay: 850,
+  /** The bio types once the name has landed, before the console starts. */
+  startBio: 1100,
+  /** Beat between the bio finishing and the console taking over. */
+  traceAfterBio: 450,
+  /** Used only when the bio is skipped, so the console still arrives. */
   startTrace: 900
+});
+
+/** The typed bio in the hero. */
+export const BIO = Object.freeze({
+  charDelay: 21,
+  pauseOnPunctuation: 170
+});
+
+/** Skim / full reading modes. */
+export const VIEW = Object.freeze({
+  defaultMode: 'full',
+  storageKey: 'view-mode'
+});
+
+/** The reverse big bang: everything collapses back to the singularity. */
+export const IMPLODE = Object.freeze({
+  /** Inward acceleration per frame, as a fraction of distance to centre. */
+  pull: 0.045,
+  /** Velocity retained per frame; below 1 the collapse keeps tightening. */
+  drag: 0.94,
+  /** How long the collapse runs before the page reloads into the intro. */
+  duration: 1500
 });
 
 /**
@@ -124,6 +151,11 @@ export const FIELD = Object.freeze({
   burstDrag: 0.972,
   coolRate: 0.006,
   maxDevicePixelRatio: 2,
+
+  /** Squared px radius of the gravity well that follows the cursor. */
+  pointerRangeSq: 34000,
+  /** Strength of that well, as a fraction of distance applied per frame. */
+  pointerPull: 0.0016,
 
   /**
    * White light separates into this on the way out. Debris is coloured by

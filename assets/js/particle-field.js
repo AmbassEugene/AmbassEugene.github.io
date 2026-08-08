@@ -17,7 +17,7 @@
  * @module particle-field
  */
 
-import { FIELD } from './config.js';
+import { FIELD, IMPLODE } from './config.js';
 import { supportsCanvas } from './env.js';
 
 /**
@@ -35,6 +35,8 @@ import { supportsCanvas } from './env.js';
  * @typedef {object} ParticleField
  * @property {() => void} bang     Detonate: reseed at centre, hot and fast.
  * @property {() => void} ambient  Cool into the drifting graph.
+ * @property {() => void} implode  Run the blast backwards, into the centre.
+ * @property {(x: number, y: number) => void} attract  Move the gravity well.
  * @property {() => void} destroy  Stop animating and release listeners.
  */
 
@@ -42,6 +44,8 @@ import { supportsCanvas } from './env.js';
 const INERT = Object.freeze({
   bang() {},
   ambient() {},
+  implode() {},
+  attract() {},
   destroy() {}
 });
 
@@ -67,10 +71,14 @@ export function createParticleField(canvas, { enabled = true } = {}) {
   /** @type {number | undefined} */
   let resizeTimer;
 
+  /** @type {'ambient' | 'bang' | 'implode'} */
   let mode = 'ambient';
   let edgeAlpha = 1;   // 0 → 1 as matter cools and the graph wires up
   let drag = 1;        // per-frame velocity multiplier
   let cool = 1;        // 0 = white-hot spectrum, 1 = settled palette
+
+  /** Gravity well tracking the cursor. Idle until the pointer moves. */
+  const pointer = { x: 0, y: 0, active: false };
 
   /** Target particle count for the current viewport. */
   const targetCount = () =>
@@ -139,6 +147,23 @@ export function createParticleField(canvas, { enabled = true } = {}) {
     start();
   }
 
+  /**
+   * The reverse big bang. Rather than reseeding, the existing particles are
+   * accelerated toward the centre and re-heated through the spectrum — the
+   * detonation played backwards on the same matter.
+   */
+  function implode() {
+    for (const p of particles) {
+      // Swap the cooled colour back to a spectral one to run the fade in reverse.
+      p.from = p.to;
+      p.to = FIELD.spectrum[Math.floor(Math.random() * FIELD.spectrum.length)];
+    }
+    mode = 'implode';
+    cool = 1;
+    drag = IMPLODE.drag;
+    start();
+  }
+
   function resize() {
     width = canvas.clientWidth;
     height = canvas.clientHeight;
@@ -157,9 +182,28 @@ export function createParticleField(canvas, { enabled = true } = {}) {
       if (cool < 1) cool = Math.min(1, cool + FIELD.coolRate);
       // Shed surplus debris until we land back at ambient density.
       if (particles.length > targetCount() && Math.random() < 0.6) particles.pop();
+    } else if (mode === 'implode') {
+      // Re-heat as it collapses: the cooling curve, run backwards.
+      cool = Math.max(0, cool - FIELD.coolRate * 4);
+      edgeAlpha = Math.max(0, edgeAlpha - 0.05);
     }
 
     for (const p of particles) {
+      if (mode === 'implode') {
+        p.vx += (width / 2 - p.x) * IMPLODE.pull;
+        p.vy += (height / 2 - p.y) * IMPLODE.pull;
+      } else if (pointer.active) {
+        // A gravity well under the cursor: near particles lean toward it.
+        const dx = pointer.x - p.x;
+        const dy = pointer.y - p.y;
+        const dsq = dx * dx + dy * dy;
+        if (dsq < FIELD.pointerRangeSq && dsq > 1) {
+          const falloff = (1 - dsq / FIELD.pointerRangeSq) * FIELD.pointerPull;
+          p.vx += dx * falloff;
+          p.vy += dy * falloff;
+        }
+      }
+
       p.x += p.vx;
       p.y += p.vy;
       p.vx *= drag;
@@ -171,6 +215,8 @@ export function createParticleField(canvas, { enabled = true } = {}) {
         p.vy += (Math.random() - 0.5) * 0.05;
       }
 
+      // Wrapping mid-collapse would fling particles back out.
+      if (mode === 'implode') continue;
       if (p.x < -20) p.x = width + 20;
       if (p.x > width + 20) p.x = -20;
       if (p.y < -20) p.y = height + 20;
@@ -244,8 +290,19 @@ export function createParticleField(canvas, { enabled = true } = {}) {
   // Animating an offscreen tab burns battery for nothing.
   const onVisibility = () => (document.hidden ? stop() : start());
 
+  /** @param {PointerEvent} event */
+  const onPointer = (event) => {
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    pointer.active = true;
+  };
+  const onPointerLeave = () => { pointer.active = false; };
+
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibility);
+  // Passive: the well never needs to block or cancel the gesture.
+  window.addEventListener('pointermove', onPointer, { passive: true });
+  document.addEventListener('pointerleave', onPointerLeave);
 
   resize();
   start();
@@ -253,11 +310,23 @@ export function createParticleField(canvas, { enabled = true } = {}) {
   return Object.freeze({
     bang,
     ambient,
+    implode,
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    attract(x, y) {
+      pointer.x = x;
+      pointer.y = y;
+      pointer.active = true;
+    },
     destroy() {
       stop();
       window.clearTimeout(resizeTimer);
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pointermove', onPointer);
+      document.removeEventListener('pointerleave', onPointerLeave);
     }
   });
 }

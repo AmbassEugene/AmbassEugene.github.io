@@ -45,6 +45,26 @@
   z-index: var(--z-stage);
 }
 
+/**
+ * The reverse big bang: the page collapses toward the same point the
+ * particles are being pulled into, then the document reloads into the
+ * opening. Duration is mirrored by IMPLODE.duration in config.js.
+ */
+body.is-imploding .stage,
+body.is-imploding .vignette,
+body.is-imploding .grain {
+  opacity: 0;
+  transform: scale(0.88);
+  filter: blur(10px);
+  transition:
+    opacity 1.4s cubic-bezier(0.7, 0, 0.85, 0.2),
+    transform 1.5s cubic-bezier(0.7, 0, 0.85, 0.2),
+    filter 1.4s ease-in;
+  pointer-events: none;
+}
+
+body.is-imploding { overflow: hidden; }
+
 /* ============================================================
    SHELL
    ============================================================ */

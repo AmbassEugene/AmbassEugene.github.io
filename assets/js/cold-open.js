@@ -17,7 +17,7 @@
  * @module cold-open
  */
 
-import { TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY } from './config.js';
+import { TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY, IMPLODE } from './config.js';
 import { qs, qsa, el, appendAll, setVars, stagger } from './dom.js';
 import { prefersReducedMotion, isDeepLink, session } from './env.js';
 import { impact } from './vibration.js';
@@ -28,6 +28,7 @@ import { impact } from './vibration.js';
  * @property {import('./vibration.js').Vibration} vibration
  * @property {import('./shard-burst.js').ShardBurst} burst
  * @property {import('./trace.js').Trace} trace
+ * @property {import('./typewriter.js').Typewriter} bio
  */
 
 /**
@@ -44,7 +45,7 @@ const DISMISS_KEYS = new Set(['Escape', 'Enter', ' ']);
  * @param {ColdOpenDeps} deps
  * @returns {ColdOpen}
  */
-export function createColdOpen({ field, vibration, burst, trace }) {
+export function createColdOpen({ field, vibration, burst, trace, bio }) {
   const scrim = qs('#intro-scrim');
   const intro = qs('#intro');
   const hero = qs('.hero .wrap');
@@ -199,7 +200,17 @@ export function createColdOpen({ field, vibration, burst, trace }) {
       intro?.remove();
       scrim?.remove();
     });
-    at(HANDOFF.startTrace, () => trace.start());
+    at(HANDOFF.startBio, handOffToBio);
+  }
+
+  /**
+   * The name has landed; the bio types itself, then the console takes over.
+   * Three textures in series rather than two typewriters at once.
+   */
+  function handOffToBio() {
+    bio.run().then(() => {
+      timers.push(window.setTimeout(() => trace.start(), HANDOFF.traceAfterBio));
+    });
   }
 
   /** Take the visitor straight to the page. */
@@ -207,6 +218,7 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     scrim?.remove();
     intro?.remove();
     revealHero(0);
+    bio.finish();
     trace.start();
   }
 
@@ -278,18 +290,32 @@ export function createColdOpen({ field, vibration, burst, trace }) {
   }
 
   /**
-   * Restart from the beginning.
+   * The reverse big bang. The field runs the detonation backwards while the
+   * page collapses toward the same point, and only then does the document
+   * reload into the opening.
    *
-   * A reload rather than a teardown-and-rebuild: the sequence mutates a lot
-   * of one-shot CSS animation state, and reconstructing it correctly costs
-   * more code than it saves for something a visitor triggers at most twice.
+   * Reload rather than teardown-and-rebuild: the sequence mutates a great
+   * deal of one-shot CSS animation state, and reconstructing it correctly
+   * costs more code than it saves for something triggered at most twice.
+   * The collapse is what makes the reload read as intentional.
    */
   function replay() {
     if (FEATURES.playIntroOncePerSession) {
       session.set(FEATURES.introSessionKey, '0');
     }
-    // Drop any hash first, or the deep-link bypass would swallow the replay.
-    window.location.replace(window.location.pathname + window.location.search);
+
+    // Drop any hash, or the deep-link bypass would swallow the replay.
+    const target = window.location.pathname + window.location.search;
+
+    if (prefersReducedMotion()) {
+      window.location.replace(target);
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.classList.add('is-imploding');
+    field.implode();
+    window.setTimeout(() => window.location.replace(target), IMPLODE.duration);
   }
 
   return Object.freeze({ play, end, replay });

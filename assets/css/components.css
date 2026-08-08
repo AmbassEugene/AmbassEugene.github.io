@@ -538,6 +538,34 @@
 }
 
 /* ============================================================
+   READING MODE
+   Skim collapses each case study to its masthead and its load-bearing
+   decision. The prose is hidden, never removed — a crawler and a screen
+   reader still receive the full text.
+   ============================================================ */
+
+.view-mode {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.view-mode__label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-right: 0.35rem;
+}
+
+body.is-skim .case__prose { display: none; }
+
+/* Without the prose the decision block carries the section, so it loses
+   the top margin that separated it from paragraphs above. */
+body.is-skim .decision { margin-top: 0; }
+body.is-skim .case { padding-block: clamp(3rem, 7vh, 5rem); }
+
+/* ============================================================
    SCROLL REVEAL
    Opt-in: content is visible until JS marks the document, so the page
    is fully readable with scripting disabled.

@@ -47,9 +47,14 @@ assets/js/
   shard-burst.js            Fragments and the constellation that wires them.
   cold-open.js              The sequencer. Owns *when*, nothing else.
   trace.js                  Hero console.
+  typewriter.js             Types text already present in the markup.
+  view-mode.js              Skim / full reading depth.
   marquee.js                Capability strip.
   reveal.js                 Scroll reveals.
   main.js                   Composition root. The only module that queries the DOM.
+tools/
+  share-card.html           Source for the social card. Imports the site's tokens.
+  build-share-card.sh       Renders it to PNG with headless Chrome.
 docs/
   security.md               Threat model, CSP, and a known limitation.
   adr/                      Architecture decision records.
@@ -75,6 +80,30 @@ machine's LAN address:
 ```bash
 python3 -m http.server 8000 --bind 0.0.0.0
 ```
+
+## Reading depth
+
+`Skim` collapses each case study to its masthead and its load-bearing decision;
+`Full` restores the prose. The choice persists for the session. Skim hides the
+prose with CSS rather than removing nodes, so a crawler and a screen reader
+always receive the complete text regardless of mode.
+
+## The social card
+
+`assets/share-card.png` is generated, not hand-drawn:
+
+```bash
+./tools/build-share-card.sh
+```
+
+`tools/share-card.html` imports `assets/css/tokens.css`, so the card cannot
+drift from the palette it advertises — rerun the script after changing tokens.
+Chrome is a local tool, not a project dependency; the PNGs are committed so
+deployment stays a plain file copy.
+
+**One value to change if the repository name changes.** `og:url`, `og:image`
+and `canonical` in `index.html` are absolute — most scrapers reject relative
+image URLs. They currently assume `https://ambasseugene.github.io/`.
 
 ## Tuning the opening
 

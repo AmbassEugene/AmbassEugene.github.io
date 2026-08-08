@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="A singularity on a dark ground">
+  <!-- The singularity, before the bang. Same palette as tokens.css. -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="28%" stop-color="#3DF5C4"/>
+      <stop offset="62%" stop-color="#8B7BFF" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#8B7BFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#05070A"/>
+  <circle cx="32" cy="32" r="24" fill="url(#glow)"/>
+  <circle cx="32" cy="32" r="18.5" fill="none" stroke="#3DF5C4" stroke-opacity="0.55" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="4.5" fill="#FFFFFF"/>
+</svg>

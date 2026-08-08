@@ -32,6 +32,17 @@
 <meta property="og:title" content="Ambassador Eugene — AI-Native Software Engineer">
 <meta property="og:description" content="Agent systems, LLM guardrails and production AI infrastructure. Built entirely with AI.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://ambasseugene.github.io/">
+<meta property="og:image" content="https://ambasseugene.github.io/assets/share-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ambassador Eugene — AI-Native Software Engineer. Agent systems, LLM guardrails, production AI infrastructure.">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="canonical" href="https://ambasseugene.github.io/">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#05070A">
 
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/base.css">
@@ -103,7 +114,7 @@
 
     <h1 class="t-display">Ambassador<span class="hero__name-2 t-outline">Eugene</span></h1>
 
-    <p class="thesis">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
+    <p class="thesis" id="bio">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
     <p class="thesis thesis--sub">Ten years shipping React, React Native and Node. The last two building the layer underneath the demos: bounded tool loops, guardrails enforced by the call graph rather than the prompt, multi-model routing, durable orchestration. The model writes fast. I decide what it's allowed to touch, what gets enforced structurally, and what ships. Three systems below — each with the decision that carried it.</p>
 
     <div class="trace" role="img" aria-label="Decorative console showing a simulated agent run that loads the three case studies below.">
@@ -138,7 +149,14 @@
 <section class="arch wrap" id="work">
   <div class="arch-head reveal">
     <h2 class="t-section">Three systems,<br>one idea</h2>
-    <p>Boundaries that hold because of structure, not because you asked the model nicely. Pick a node.</p>
+    <div>
+      <p>Boundaries that hold because of structure, not because you asked the model nicely. Pick a node.</p>
+      <div class="view-mode" id="view-mode" role="group" aria-label="Reading depth">
+        <span class="view-mode__label">Read as</span>
+        <button class="btn btn--ghost" type="button" data-mode="skim" aria-pressed="false">Skim</button>
+        <button class="btn btn--ghost" type="button" data-mode="full" aria-pressed="true">Full</button>
+      </div>
+    </div>
   </div>
 
   <nav class="nodes reveal" aria-label="Case studies">
@@ -179,7 +197,7 @@
     <p class="stack">Next.js 16 · React 19 · TypeScript · Supabase/PostgreSQL · Anthropic SDK · Stripe · Paystack · WhatsApp Cloud API</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <h4 class="sub-head">Context</h4>
     <p>Tadhkir is a WhatsApp retention platform for recurring-visit service businesses — dental practices, optical clinics, physiotherapists, salons — across the UK, Gulf, US and Africa. It tracks when each customer is due back and sends a personalised reminder at the right interval for that industry.</p>
     <p>Owners kept asking questions the dashboard couldn't answer: <em>which customers am I about to lose, and what should I do about it?</em> The obvious answer was an assistant over their data. The non-obvious part was doing that safely on a platform holding patient and client records.</p>
@@ -203,7 +221,7 @@
     <p>Tool handlers receive tenant context resolved server-side from the authenticated session, and <em>never</em> accept a tenant selector as a model-supplied argument. The model cannot ask for another business's data because there is no parameter through which to ask. "Only discuss this business" is advisory. This is architectural.</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <p><strong>Aggregates only, never people.</strong> Tools return counts, rates and buckets — <code>get_business_overview</code>, <code>get_at_risk_summary</code>, <code>get_reminder_activity</code>. When an owner needs an individual record, the copilot points them to the dashboard. The DPA commitment holds because no code path exists to violate it.</p>
     <p><strong>A layered guardrail pipeline.</strong> Every request from both surfaces runs through one <code>guardedCopilot</code> wrapper: input caps at 30 messages per conversation and 4,000 chars per message; rate limits of 15/min and 200/day per user plus a global daily circuit breaker; injection and exfiltration screening that pattern-checks the latest turn for instruction-override, system-prompt extraction and cross-tenant probes, returning a canned refusal <em>without calling the model</em> so abuse burns no credits; a strike-based cooldown where five flagged requests in ten minutes triggers a 30-minute lockout, handling the determined abuser rather than just the opportunist; and output scrubbing of anything credential-shaped as defence in depth.</p>
     <p><strong>Cost control through model tiering.</strong> The expensive Sonnet tool loop sits behind a cheap Haiku classifier that runs first and rejects off-scope requests — marketing copy, coding help, general consulting — before any billable frontier call. Persistent off-label use trips the same strike system. The classifier fails open, so an outage degrades to "slightly more expensive" rather than "copilot down."</p>
@@ -231,7 +249,7 @@
     <p class="stack">Next.js 16 · React 19 · TypeScript · Prisma 7 · PostgreSQL · Anthropic + OpenAI SDKs · Pinecone · Inngest</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <h4 class="sub-head">Context</h4>
     <p>AI app builders generate fast demos that tend to be unarchitected and fragile under real users, and they work in English only. Eugenius takes a different position: plan before building, generate natively in the user's own language, and keep running the app after it ships.</p>
 
@@ -248,7 +266,7 @@
     <p>Every stage runs as a checkpointed background job on Inngest. A build taking several minutes survives restarts and partial failures, resuming from the last completed stage instead of starting over. This was the difference between a demo and something a user can rely on.</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <p><strong>Multi-model routing.</strong> A router selects per task across Anthropic and OpenAI models by capability, latency and cost. Architecture and review get the strong models; mechanical transforms don't. Single-model architectures are simpler, but they either overpay everywhere or underperform everywhere.</p>
     <p><strong>Retrieval plus a correction-learning loop.</strong> A Pinecone-backed vector store indexes generated projects and user corrections. When a user edits generated output, the system treats that edit as a signal: it extracts the pattern and feeds it into later generations. No manual labelling, and the system's weak spots get corrected by the people best placed to notice them.</p>
     <p><strong>Self-healing after deploy.</strong> Runtime error signals from deployed applications route back into the agent loop, which diagnoses and patches the live app. This closes the build-and-run gap pure code-generation tools leave open — and it's only possible because the platform owns the deployment, not just the codebase.</p>
@@ -276,7 +294,7 @@
     <p class="stack">React Native (Expo) · React · TypeScript · Node.js/Express · PostgreSQL/Supabase · Stripe · Paystack · Sentry</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <h4 class="sub-head">Context</h4>
     <p>I built the ordering platform for Luciana's Grill from zero — customer mobile apps for iOS and Android, an operator app, a web ordering front end, and the backend behind menu management, order routing and kitchen operations. When the venue wound down, the platform was the asset worth keeping. Zerli is that platform re-architected into a multi-tenant SaaS any restaurant can run on.</p>
 
@@ -302,7 +320,7 @@
     <p>Security, then language, then framework, then data, then tenancy. Migrating four applications, a database and a payment layer simultaneously fails. Sequencing it meant the product stayed shippable throughout.</p>
   </div>
 
-  <div class="col reveal">
+  <div class="col case__prose reveal">
     <p><strong>Modernised in phases.</strong> Expo SDK 56 with EAS Build and EAS Update replacing manual keystore handling and CodePush; React Navigation v7; Redux Toolkit replacing bare Redux with thunks; Vite replacing Create React App; strict TypeScript across all four applications; Sentry for crash and error tracking on every surface, including the two that previously had none.</p>
     <p><strong>Migrated off Firebase to Postgres.</strong> Firestore's document model fought the relational shape of orders, menus and venues. Moving to PostgreSQL — with migration scripts written and reversible — gave real constraints, real joins and a schema that could express tenancy.</p>
     <p><strong>Re-architected for multi-tenancy.</strong> Tenant data isolation, per-venue configuration, onboarding, and an app-factory build script that produces a branded application per restaurant from shared source rather than forking the codebase per customer. Payments span Stripe and Paystack, covering checkout, webhooks, refunds and reconciliation.</p>

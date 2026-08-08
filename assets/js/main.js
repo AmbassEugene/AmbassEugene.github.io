@@ -12,12 +12,15 @@
  */
 
 import { qs, qsSvg } from './dom.js';
+import { BIO } from './config.js';
 import { prefersReducedMotion } from './env.js';
 import { createParticleField } from './particle-field.js';
 import { createVibration } from './vibration.js';
 import { createShardBurst } from './shard-burst.js';
 import { createColdOpen } from './cold-open.js';
 import { createTrace } from './trace.js';
+import { createTypewriter } from './typewriter.js';
+import { mountViewMode } from './view-mode.js';
 import { mountMarquee } from './marquee.js';
 import { mountReveals } from './reveal.js';
 
@@ -41,10 +44,14 @@ const burst = createShardBurst(qs('#shards'), qsSvg('#constellation'));
 
 const trace = createTrace(qs('#trace'), qs('#trace-state'));
 
-const coldOpen = createColdOpen({ field, vibration, burst, trace });
+// Types the positioning line already present in the markup.
+const bio = createTypewriter(qs('#bio'), BIO);
+
+const coldOpen = createColdOpen({ field, vibration, burst, trace, bio });
 
 mountMarquee(qs('#marquee'));
 mountReveals();
+mountViewMode(qs('#view-mode'));
 
 qs('#replay-intro')?.addEventListener('click', coldOpen.replay);
 

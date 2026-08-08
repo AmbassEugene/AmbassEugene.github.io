@@ -7,7 +7,10 @@
 # truth, the site is a port of it, and the source is not published. Pass a
 # different path as the first argument if it moves.
 #
-#   ./tools/build-cv.sh [path/to/master-cv.md] [--with-phone]
+#   ./tools/build-cv.sh [path/to/cv.md] [-o output.pdf] [--with-phone]
+#
+# Tailored variants render to their own path so the published CV is never
+# overwritten by a version aimed at one employer.
 #
 # Phone numbers are stripped by default — this PDF is served from a public
 # site, where a number is scraped rather than read. Pass --with-phone for a
@@ -17,13 +20,20 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-source_md="${1:-$root/../cv/master-cv.md}"
-[ "${1:-}" = "--with-phone" ] && source_md="$root/../cv/master-cv.md"
-
+source_md=""
+out="$root/assets/ambassador-eugene-cv.pdf"
 phone_flag=""
-for arg in "$@"; do
-  [ "$arg" = "--with-phone" ] && phone_flag="--with-phone"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --with-phone) phone_flag="--with-phone" ;;
+    -o|--output)  out="$2"; shift ;;
+    *)            [ -z "$source_md" ] && source_md="$1" ;;
+  esac
+  shift
 done
+
+source_md="${source_md:-$root/../cv/master-cv.md}"
 
 if [ ! -f "$source_md" ]; then
   echo "error: CV markdown not found at $source_md" >&2
@@ -51,7 +61,7 @@ echo "→ rendering markdown"
 cp "$root/tools/cv.css" "$tmp/cv.css"
 node "$root/tools/md-to-html.mjs" "$source_md" "$tmp/cv.html" $phone_flag
 
-out="$root/assets/ambassador-eugene-cv.pdf"
+mkdir -p "$(dirname "$out")"
 rm -f "$out"
 
 echo "→ printing to PDF"
@@ -79,9 +89,12 @@ wait "$pid" 2>/dev/null || true
 
 [ -s "$out" ] || { echo "error: PDF was not produced" >&2; exit 1; }
 
-pages=$(strings "$out" | grep -c '/Type[[:space:]]*/Page[^s]' || true)
+pages=$(python3 -c "
+import re,sys
+print(len(re.findall(rb'/Type\s*/Page[^s]', open(sys.argv[1],'rb').read())))
+" "$out" 2>/dev/null || echo '?')
 printf '  %s  (%s KB, %s pages)\n' \
-  "assets/ambassador-eugene-cv.pdf" \
+  "$out" \
   "$(( $(wc -c < "$out") / 1024 ))" \
   "${pages:-?}"
 

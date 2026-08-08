@@ -13,12 +13,15 @@
  */
 
 import { CONVERGE } from './config.js';
-import { qsa, setVars, stagger } from './dom.js';
+import { qsa, stagger } from './dom.js';
 
 /**
  * @typedef {object} StageNav
- * @property {(points: { left: DOMPoint, right: DOMPoint }) => void} form
- *   Place the pieces at the convergence points and resolve them into view.
+ * @property {() => DOMPoint[]} targets
+ *   Where each piece will sit, as an offset from the viewport centre. The
+ *   fragments converge on these, so the debris arrives exactly where the
+ *   buttons resolve rather than somewhere approximately similar.
+ * @property {() => void} form  Resolve the pieces into view.
  * @property {(handler: () => void) => void} onEnter
  *   Called when the visitor chooses to read on.
  */
@@ -29,22 +32,30 @@ import { qsa, setVars, stagger } from './dom.js';
  */
 export function createStageNav(root) {
   if (!root) {
-    return Object.freeze({ form() {}, onEnter() {} });
+    return Object.freeze({
+      /** @returns {DOMPoint[]} */ targets: () => [],
+      form() {},
+      onEnter() {}
+    });
   }
 
   const items = /** @type {HTMLAnchorElement[]} */ (qsa('[data-action]', root));
 
   return Object.freeze({
-    /** @param {{ left: DOMPoint, right: DOMPoint }} points */
-    form(points) {
-      items.forEach((item, i) => {
-        const target = i === 0 ? points.left : points.right;
-        setVars(item, {
-          '--x': `${target.x.toFixed(0)}px`,
-          '--y': `${target.y.toFixed(0)}px`
-        });
+    /** @returns {DOMPoint[]} */
+    targets() {
+      // The nav is laid out but transparent at this point, so it already has
+      // real geometry to measure — no guessing, and no hard-coded offsets.
+      return items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return new DOMPoint(
+          box.left + box.width / 2 - window.innerWidth / 2,
+          box.top + box.height / 2 - window.innerHeight / 2
+        );
       });
+    },
 
+    form() {
       root.classList.add('is-formed');
       stagger(items, CONVERGE.stagger, (item) => item.classList.add('is-formed'));
     },

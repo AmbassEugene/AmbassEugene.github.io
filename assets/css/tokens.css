@@ -44,7 +44,12 @@
   --section: clamp(4.5rem, 11vh, 8rem);   /* vertical section rhythm */
 
   /* ---- Motion ----
-     Named curves so easing is consistent and reviewable in one place. */
+     --tempo scales every duration in the opening sequence. Declared at 1 so
+     the stylesheet stands alone; main.js overwrites it from config.TEMPO, so
+     one number paces both halves and they cannot drift apart. */
+  --tempo: 1;
+
+  /* Named curves, so easing is consistent and reviewable in one place. */
   --ease-out:  cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-in:   cubic-bezier(0.55, 0, 0.85, 0.35);
   --ease-pop:  cubic-bezier(0.16, 1.5, 0.3, 1);

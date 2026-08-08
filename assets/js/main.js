@@ -12,7 +12,7 @@
  */
 
 import { qs, qsSvg } from './dom.js';
-import { BIO } from './config.js';
+import { BIO, TEMPO } from './config.js';
 import { prefersReducedMotion } from './env.js';
 import { createParticleField } from './particle-field.js';
 import { createVibration } from './vibration.js';
@@ -31,6 +31,13 @@ import { mountReveals } from './reveal.js';
  * complete and static rather than blank.
  */
 document.documentElement.classList.add('js');
+
+/**
+ * Publish the tempo to CSS so keyframe durations scale with the same number
+ * the JS timeline uses. Without this the two halves of the sequence would
+ * drift apart the moment TEMPO changed.
+ */
+document.documentElement.style.setProperty('--tempo', String(TEMPO));
 
 const motionAllowed = !prefersReducedMotion();
 

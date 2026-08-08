@@ -94,7 +94,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(61, 245, 196, 0.55), transparent);
   opacity: 0;
-  animation: scan 2200ms var(--ease-soft) 120ms forwards;
+  animation: scan calc(2200ms * var(--tempo)) var(--ease-soft) 120ms forwards;
 }
 @keyframes scan {
   0%   { transform: translateY(0); opacity: 0; }
@@ -138,8 +138,8 @@ body.is-intro .hero .wrap > * { opacity: 0; }
     0 0 60px 20px rgba(139, 123, 255, 0.35);
   transform: scale(0);
   animation:
-    singularity-in 900ms var(--ease-in) 300ms forwards,
-    breathe 2400ms ease-in-out 1200ms infinite;
+    singularity-in calc(900ms * var(--tempo)) var(--ease-in) 300ms forwards,
+    breathe calc(2400ms * var(--tempo)) ease-in-out 1200ms infinite;
 }
 @keyframes singularity-in {
   0%   { transform: scale(0); opacity: 0; }
@@ -217,7 +217,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    White core refracting out through the spectrum.
    ============================================================ */
 
-.intro__singularity.is-blown { animation: singularity-out 620ms ease-out forwards; }
+.intro__singularity.is-blown { animation: singularity-out calc(620ms * var(--tempo)) ease-out forwards; }
 @keyframes singularity-out {
   0%   { transform: scale(1.2); opacity: 1; }
   30%  { transform: scale(11); opacity: 1; }
@@ -242,8 +242,8 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 }
 .intro__flash.is-firing {
   animation:
-    flash 900ms cubic-bezier(0.1, 0.8, 0.3, 1) forwards,
-    prism 900ms linear forwards;
+    flash calc(900ms * var(--tempo)) cubic-bezier(0.1, 0.8, 0.3, 1) forwards,
+    prism calc(900ms * var(--tempo)) linear forwards;
 }
 @keyframes flash {
   0%   { opacity: 0; transform: scale(0.12); }
@@ -268,7 +268,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 .intro__ca--g { background: radial-gradient(closest-side, rgba(40, 255, 150, 0.75), transparent 62%); }
 .intro__ca--b { background: radial-gradient(closest-side, rgba(60, 120, 255, 0.75), transparent 62%); }
 
-.intro__ca.is-firing { animation: ca 820ms cubic-bezier(0.12, 0.85, 0.3, 1) forwards; }
+.intro__ca.is-firing { animation: ca calc(820ms * var(--tempo)) cubic-bezier(0.12, 0.85, 0.3, 1) forwards; }
 .intro__ca--r.is-firing { animation-name: ca-red; }
 .intro__ca--b.is-firing { animation-name: ca-blue; }
 @keyframes ca {
@@ -302,7 +302,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
           mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
 }
-.intro__shock.is-firing { animation: shock 1500ms cubic-bezier(0.15, 0.85, 0.25, 1) forwards; }
+.intro__shock.is-firing { animation: shock calc(1500ms * var(--tempo)) cubic-bezier(0.15, 0.85, 0.25, 1) forwards; }
 .intro__shock--1.is-firing { animation-delay: 0ms; }
 .intro__shock--2.is-firing { animation-delay: 180ms; }
 .intro__shock--3.is-firing { animation-delay: 420ms; }
@@ -311,7 +311,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   100% { transform: scale(11) rotate(150deg); opacity: 0; }
 }
 
-.intro.is-quaking { animation: quake 900ms cubic-bezier(0.25, 0.9, 0.3, 1) forwards; }
+.intro.is-quaking { animation: quake calc(900ms * var(--tempo)) cubic-bezier(0.25, 0.9, 0.3, 1) forwards; }
 @keyframes quake {
   0%   { transform: translate(0, 0) scale(1); }
   6%   { transform: translate(-14px, 9px) scale(1.012); }
@@ -370,7 +370,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
  * ordinary.
  */
 .shard.is-popped {
-  animation: shard-pop 900ms var(--ease-pop);
+  animation: shard-pop calc(900ms * var(--tempo)) var(--ease-pop);
   opacity: 1;
   transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
 }
@@ -378,7 +378,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 /* Recede once the statement needs the stage. */
 .shard.is-faded {
   opacity: 0.3;
-  transition: opacity 900ms ease;
+  transition: opacity calc(900ms * var(--tempo)) ease;
 }
 @keyframes shard-pop {
   0%   { opacity: 0; transform: translate(-50%, -50%) translate(0, 0) scale(0.15) rotate(var(--rot)); }
@@ -402,7 +402,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   stroke-dasharray: var(--len);
   stroke-dashoffset: var(--len);
 }
-.intro__constellation line.is-drawn { animation: draw-line 700ms cubic-bezier(0.3, 0.8, 0.4, 1) forwards; }
+.intro__constellation line.is-drawn { animation: draw-line calc(700ms * var(--tempo)) cubic-bezier(0.3, 0.8, 0.4, 1) forwards; }
 @keyframes draw-line { to { stroke-dashoffset: 0; } }
 
 .intro__constellation.is-dim {
@@ -434,7 +434,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   transform: translateY(0.55em) scale(0.94);
   filter: blur(6px);
 }
-.intro__word.is-in { animation: word-in 620ms cubic-bezier(0.18, 0.9, 0.25, 1) forwards; }
+.intro__word.is-in { animation: word-in calc(620ms * var(--tempo)) cubic-bezier(0.18, 0.9, 0.25, 1) forwards; }
 @keyframes word-in {
   to { opacity: 1; transform: none; filter: blur(0); }
 }
@@ -453,7 +453,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   opacity: 0;
   transform: translateY(0.4em) scale(0.3) rotate(var(--r));
 }
-.intro__char.is-in { animation: char-pop 820ms var(--ease-pop) forwards; }
+.intro__char.is-in { animation: char-pop calc(820ms * var(--tempo)) var(--ease-pop) forwards; }
 @keyframes char-pop {
   0%   { opacity: 0; transform: translateY(0.4em) scale(0.3) rotate(var(--r)); }
   60%  { opacity: 1; transform: translateY(-0.06em) scale(1.2) rotate(0deg); }
@@ -461,7 +461,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 }
 
 /* One hard pulse once the word has landed. */
-.intro__shout.is-blooming { animation: bloom 1200ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+.intro__shout.is-blooming { animation: bloom calc(1200ms * var(--tempo)) cubic-bezier(0.2, 0.8, 0.3, 1); }
 @keyframes bloom {
   0% { text-shadow: 0 0 42px rgba(61, 245, 196, 0.45); }
   18% {
@@ -478,7 +478,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ============================================================ */
 
 .intro__copy.is-receding {
-  animation: recede 900ms var(--ease-soft) forwards;
+  animation: recede calc(900ms * var(--tempo)) var(--ease-soft) forwards;
   pointer-events: none;
 }
 @keyframes recede {
@@ -501,24 +501,35 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    turning over around it.
    ============================================================ */
 
-.intro__bio {
+/**
+ * The bio and the two pieces share one centred panel, so the pieces resolve
+ * *below* the copy instead of over it, and the whole block stays optically
+ * centred as the nav appears.
+ */
+.intro__panel {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 2;
   width: min(46ch, 86vw);
+  transform: translate(-50%, -50%);
+}
+
+.intro__bio {
   text-align: left;
   font-size: clamp(1.02rem, 0.9rem + 0.65vw, 1.42rem);
   line-height: 1.55;
   letter-spacing: -0.012em;
   opacity: 0;
-  transform: translate(-50%, calc(-50% + 16px));
+  transform: translateY(16px);
   pointer-events: none;
 }
 .intro__bio.is-shown {
   opacity: 1;
-  transform: translate(-50%, -50%);
-  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+  transform: none;
+  transition:
+    opacity calc(700ms * var(--tempo)) var(--ease-out),
+    transform calc(700ms * var(--tempo)) var(--ease-out);
 }
 
 .intro__bio p {
@@ -550,7 +561,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ============================================================ */
 
 .shard.is-shattering {
-  animation: shard-shatter 520ms cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+  animation: shard-shatter calc(520ms * var(--tempo)) cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
 }
 @keyframes shard-shatter {
   0% {
@@ -574,7 +585,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 }
 
 .shard.is-reforming {
-  animation: shard-reform 520ms var(--ease-pop) forwards;
+  animation: shard-reform calc(520ms * var(--tempo)) var(--ease-pop) forwards;
 }
 @keyframes shard-reform {
   0% {
@@ -599,7 +610,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ============================================================ */
 
 .shard.is-quaking {
-  animation: shard-quake 620ms ease-in-out infinite;
+  animation: shard-quake calc(620ms * var(--tempo)) ease-in-out infinite;
   opacity: 1;
   z-index: 1;
 }
@@ -620,9 +631,9 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   filter: blur(3px);
   transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(0.25);
   transition:
-    transform 900ms cubic-bezier(0.55, 0, 0.2, 1),
-    opacity 900ms cubic-bezier(0.7, 0, 0.9, 0.4),
-    filter 900ms ease-in;
+    transform calc(900ms * var(--tempo)) cubic-bezier(0.55, 0, 0.2, 1),
+    opacity calc(900ms * var(--tempo)) cubic-bezier(0.7, 0, 0.9, 0.4),
+    filter calc(900ms * var(--tempo)) ease-in;
 }
 
 /* ============================================================
@@ -630,15 +641,13 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ============================================================ */
 
 .intro__nav {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative;
   z-index: 3;
   display: flex;
-  gap: clamp(0.75rem, 3vw, 2rem);
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  margin-top: clamp(2rem, 5vh, 3.25rem);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%);
 }
 .intro__nav.is-formed {
   opacity: 1;
@@ -660,7 +669,7 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   filter: blur(6px);
 }
 .intro__nav-item.is-formed {
-  animation: piece-form 800ms var(--ease-pop) forwards;
+  animation: piece-form calc(800ms * var(--tempo)) var(--ease-pop) forwards;
 }
 @keyframes piece-form {
   0% {

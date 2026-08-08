@@ -11,7 +11,7 @@
  */
 
 import {
-  FRAGMENTS, FRAGMENT_POOL, FRAGMENT_CYCLE, SHARD_LAYOUT, CADENCE, CONVERGE
+  FRAGMENTS, FRAGMENT_POOL, FRAGMENT_CYCLE, SHARD_LAYOUT, CADENCE, CONVERGE, RESPAWN
 } from './config.js';
 import { el, svgEl, appendAll, setVars, stagger } from './dom.js';
 
@@ -22,9 +22,10 @@ import { el, svgEl, appendAll, setVars, stagger } from './dom.js';
  * @property {() => void} fade                 Recede, to clear room for copy.
  * @property {() => void} startCycling         Begin shattering and reforming.
  * @property {() => void} stopCycling          Halt the cycle.
- * @property {() => Promise<{ left: DOMPoint, right: DOMPoint }>} converge
- *   Detonate every fragment and draw the pieces to two points. Resolves with
- *   those points so the caller can form the nav out of them.
+ * @property {(targets: DOMPoint[]) => Promise<void>} converge
+ *   Shake every fragment apart and draw the pieces to the given points.
+ * @property {() => void} respawn
+ *   Bring fresh fragments back, clear of the panel, and resume cycling.
  */
 
 /**
@@ -65,14 +66,14 @@ function placeFragment(index, total) {
  */
 export function createShardBurst(container, svg) {
   if (!container) {
-    const origin = new DOMPoint(0, 0);
     return Object.freeze({
       /** @returns {number[]} */ pop: () => [],
       /** @returns {number[]} */ wire: () => [],
       fade() {},
       startCycling() {},
       stopCycling() {},
-      converge: () => Promise.resolve({ left: origin, right: origin })
+      converge: () => Promise.resolve(),
+      respawn() {}
     });
   }
 
@@ -206,28 +207,23 @@ export function createShardBurst(container, svg) {
   }
 
   /**
-   * Everything shakes, then the pieces are drawn to two points. Resolves once
-   * they have arrived, with the coordinates the nav should form at.
+   * Everything shakes, then the pieces are drawn to the given points.
    *
-   * @returns {Promise<{ left: DOMPoint, right: DOMPoint }>}
+   * @param {DOMPoint[]} targets Offsets from the viewport centre. Fragments
+   *   are dealt round-robin across them, so any number of targets works.
+   * @returns {Promise<void>} Resolves once the pieces have arrived.
    */
-  function converge() {
+  function converge(targets) {
     stopCycling();
     svg?.classList.add('is-dim');
 
-    const vmin = Math.min(window.innerWidth, window.innerHeight);
-    const offset = CONVERGE.spread * vmin;
-    const points = {
-      left: new DOMPoint(-offset, 0),
-      right: new DOMPoint(offset, 0)
-    };
-
+    const points = targets.length > 0 ? targets : [new DOMPoint(0, 0)];
     for (const shard of elements) shard.classList.add('is-quaking');
 
     return new Promise((resolve) => {
       window.setTimeout(() => {
         elements.forEach((shard, i) => {
-          const target = i % 2 === 0 ? points.left : points.right;
+          const target = points[i % points.length];
           shard.classList.remove('is-quaking', 'is-faded');
           setVars(shard, {
             '--x': `${target.x.toFixed(0)}px`,
@@ -236,10 +232,49 @@ export function createShardBurst(container, svg) {
           shard.classList.add('is-converging');
         });
 
-        window.setTimeout(() => resolve(points), CONVERGE.duration);
+        window.setTimeout(resolve, CONVERGE.duration);
       }, CONVERGE.formDelay);
     });
   }
 
-  return Object.freeze({ pop, wire, fade, startCycling, stopCycling, converge });
+  /**
+   * Bring fragments back after the reassembly, so the stage keeps breathing
+   * rather than emptying out. They return further out than the first burst
+   * and clear of the vertical band the panel now occupies, then resume
+   * cycling.
+   */
+  function respawn() {
+    const vmin = Math.min(window.innerWidth, window.innerHeight);
+    const isNarrow = window.innerWidth < SHARD_LAYOUT.narrowBreakpoint;
+    const base = isNarrow ? RESPAWN.radiusRatioNarrow : RESPAWN.radiusRatio;
+    const guard = RESPAWN.panelBand * vmin;
+
+    elements.forEach((shard, i) => {
+      const angle = (i / elements.length) * Math.PI * 2 + Math.random() * 0.4;
+      const radius = base * vmin + Math.random() * SHARD_LAYOUT.radiusJitter * vmin;
+
+      let y = Math.sin(angle) * radius;
+      // Push clear of the panel rather than landing on top of the copy.
+      if (Math.abs(y) < guard) y = Math.sign(y || 1) * guard;
+
+      shard.classList.remove('is-converging', 'is-popped', 'is-faded');
+      shard.textContent = nextLabel();
+      setVars(shard, {
+        '--x': `${(Math.cos(angle) * radius * SHARD_LAYOUT.horizontalStretch).toFixed(0)}px`,
+        '--y': `${y.toFixed(0)}px`,
+        '--rot': `${((Math.random() - 0.5) * SHARD_LAYOUT.maxRotation).toFixed(0)}deg`
+      });
+    });
+
+    // Let the class removal commit before re-adding, or the pop animation
+    // is never restarted.
+    requestAnimationFrame(() => {
+      stagger(elements, RESPAWN.stagger, (shard) => shard.classList.add('is-popped'));
+      window.setTimeout(startCycling, elements.length * RESPAWN.stagger);
+    });
+  }
+
+  return Object.freeze({
+    pop, wire, fade, startCycling, stopCycling, converge, respawn
+  });
 }

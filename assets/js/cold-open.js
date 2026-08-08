@@ -18,7 +18,7 @@
  */
 
 import {
-  TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY, IMPLODE
+  TIMELINE, CADENCE, HANDOFF, CONVERGE, FEATURES, INTRO_COPY, IMPLODE
 } from './config.js';
 import { qs, qsa, el, appendAll, setVars, stagger } from './dom.js';
 import { prefersReducedMotion, isDeepLink, session } from './env.js';
@@ -235,7 +235,12 @@ export function createColdOpen({ field, vibration, burst, trace, bio, stageNav }
    */
   function reassemble() {
     after(() => {
-      burst.converge().then((points) => stageNav.form(points));
+      // Targets are measured from the nav's real geometry, so the debris
+      // arrives exactly where the buttons resolve.
+      burst.converge(stageNav.targets()).then(() => {
+        stageNav.form();
+        after(() => burst.respawn(), CONVERGE.respawnDelay);
+      });
     }, HANDOFF.holdAfterBio);
   }
 

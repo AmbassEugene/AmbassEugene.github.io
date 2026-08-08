@@ -12,6 +12,28 @@
  * @module config
  */
 
+/**
+ * Global pace of the opening. Every duration below is authored at 1× and
+ * scaled through this, and the same value is published to CSS as `--tempo`
+ * so keyframe durations move with it — one number changes the whole
+ * sequence, and JS and CSS can never drift apart.
+ *
+ * 1 = the original cut. Above 1 is slower.
+ */
+export const TEMPO = 1.25;
+
+/**
+ * Scale a table of millisecond values by TEMPO.
+ * @template {Record<string, number>} T
+ * @param {T} table
+ * @returns {Readonly<T>}
+ */
+function paced(table) {
+  return Object.freeze(/** @type {T} */ (Object.fromEntries(
+    Object.entries(table).map(([key, ms]) => [key, Math.round(ms * TEMPO)])
+  )));
+}
+
 /** @typedef {{ label: string, tone?: 'mint' | 'violet' }} Fragment */
 /** @typedef {{ text: string, kind: 'note' | 'call' | 'arg' | 'result', ok?: string }} TraceLine */
 
@@ -31,7 +53,7 @@ export const FEATURES = Object.freeze({
  * The opening sequence, in milliseconds from start.
  * Six acts. Adjusting one act means changing one number here.
  */
-export const TIMELINE = Object.freeze({
+export const TIMELINE = paced({
   // Act I — the void
   sayAwaiting: 500,
   sayIntent: 1600,
@@ -73,19 +95,22 @@ export const TIMELINE = Object.freeze({
   end: 15000
 });
 
-/** Per-element stagger and per-ring duration, in milliseconds. */
+/** Per-element stagger, in milliseconds. */
 export const CADENCE = Object.freeze({
-  ringDurations: [2000, 1700, 1200],
-  shardStagger: 110,
-  constellationStagger: 55,
-  wordStagger: 165,
-  charStagger: 85,
-  heroStagger: 110,
-  traceMinGap: 90,
-  traceJitter: 260,
-  traceLeadIn: 300,
-  /** Beat the readout holds empty while swapping lines. */
-  readoutSwap: 260
+  ...paced({
+    shardStagger: 110,
+    constellationStagger: 55,
+    wordStagger: 165,
+    charStagger: 85,
+    heroStagger: 110,
+    traceMinGap: 90,
+    traceJitter: 260,
+    traceLeadIn: 300,
+    /** Beat the readout holds empty while swapping lines. */
+    readoutSwap: 260
+  }),
+  /** How long each collapse ring takes to tighten. */
+  ringDurations: Object.freeze([2000, 1700, 1200].map((ms) => Math.round(ms * TEMPO)))
 });
 
 /**
@@ -93,7 +118,7 @@ export const CADENCE = Object.freeze({
  * TIMELINE because these are offsets from `end()`, which the skip button can
  * trigger at any point.
  */
-export const HANDOFF = Object.freeze({
+export const HANDOFF = paced({
   heroDelay: 220,
   removeOverlay: 850,
   startTrace: 900,
@@ -101,14 +126,18 @@ export const HANDOFF = Object.freeze({
   holdAfterBio: 1400
 });
 
-/** The typed bio in the hero. */
 /**
- * The typed bio. Faster per character than a console would be, because
- * this is prose a visitor is reading rather than output they are watching.
+ * The typed bio.
+ *
+ * Deliberately *not* scaled by TEMPO — this is prose being read, not motion
+ * being watched, so it is set from reading speed rather than from the pace of
+ * the sequence around it. Comfortable prose reading is roughly 25 characters
+ * per second; 38ms per character lands just under that, which leaves the
+ * reader slightly ahead of the cursor rather than chasing it.
  */
 export const BIO = Object.freeze({
-  charDelay: 17,
-  pauseOnPunctuation: 190
+  charDelay: 38,
+  pauseOnPunctuation: 260
 });
 
 /** Skim / full reading modes. */
@@ -227,10 +256,10 @@ export const FRAGMENT_POOL = Object.freeze([
 ]);
 
 /** How often a fragment shatters and comes back carrying something else. */
-export const FRAGMENT_CYCLE = Object.freeze({
+export const FRAGMENT_CYCLE = paced({
   minDelay: 1400,
   maxDelay: 4200,
-  /** Must match the shatter animation in cold-open.css. */
+  /** Must match the shatter animation in cold-open.css, which scales too. */
   shatterDuration: 520
 });
 
@@ -243,15 +272,35 @@ export const STAGE_NAV = Object.freeze([
   { label: 'Download CV', action: 'download', href: 'assets/ambassador-eugene-cv.pdf' }
 ]);
 
-/** The collapse that reassembles the fragments into the two nav pieces. */
+/**
+ * The collapse that reassembles the fragments into the two nav pieces.
+ * Targets are measured from the nav's real position rather than assumed, so
+ * the pieces converge on exactly where the buttons appear.
+ */
 export const CONVERGE = Object.freeze({
-  /** Horizontal offset of each convergence point, as a fraction of vmin. */
-  spread: 0.17,
-  /** Must match the converge transition in cold-open.css. */
-  duration: 900,
-  /** Beat between the fragments arriving and the nav resolving out of them. */
-  formDelay: 620,
-  stagger: 45
+  ...paced({
+    /** Must match the converge transition in cold-open.css. */
+    duration: 900,
+    /** Beat between the quake starting and the pieces being drawn in. */
+    formDelay: 620,
+    stagger: 45,
+    /** Beat after the nav forms before fresh fragments return. */
+    respawnDelay: 900
+  })
+});
+
+/**
+ * Fragments return after the reassembly, so the stage keeps breathing rather
+ * than emptying out once the nav has formed. They come back further out than
+ * the first burst, since the panel below the copy now occupies more of the
+ * centre.
+ */
+export const RESPAWN = Object.freeze({
+  radiusRatio: 0.44,
+  radiusRatioNarrow: 0.40,
+  /** Vertical half-height of the region the panel occupies, as vmin. */
+  panelBand: 0.30,
+  stagger: Math.round(90 * TEMPO)
 });
 
 /** Geometry for scattering fragments without covering the copy. */

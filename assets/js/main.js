@@ -20,6 +20,7 @@ import { createShardBurst } from './shard-burst.js';
 import { createColdOpen } from './cold-open.js';
 import { createTrace } from './trace.js';
 import { createTypewriter } from './typewriter.js';
+import { createStageNav } from './stage-nav.js';
 import { mountViewMode } from './view-mode.js';
 import { mountMarquee } from './marquee.js';
 import { mountReveals } from './reveal.js';
@@ -45,9 +46,11 @@ const burst = createShardBurst(qs('#shards'), qsSvg('#constellation'));
 const trace = createTrace(qs('#trace'), qs('#trace-state'));
 
 // Types the positioning line already present in the markup.
-const bio = createTypewriter(qs('#bio'), BIO);
+const bio = createTypewriter(qs('#intro-bio'), BIO);
 
-const coldOpen = createColdOpen({ field, vibration, burst, trace, bio });
+const stageNav = createStageNav(qs('#intro-nav'));
+
+const coldOpen = createColdOpen({ field, vibration, burst, trace, bio, stageNav });
 
 mountMarquee(qs('#marquee'));
 mountReveals();

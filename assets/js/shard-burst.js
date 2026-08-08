@@ -10,7 +10,9 @@
  * @module shard-burst
  */
 
-import { FRAGMENTS, SHARD_LAYOUT, CADENCE } from './config.js';
+import {
+  FRAGMENTS, FRAGMENT_POOL, FRAGMENT_CYCLE, SHARD_LAYOUT, CADENCE, CONVERGE
+} from './config.js';
 import { el, svgEl, appendAll, setVars, stagger } from './dom.js';
 
 /**
@@ -18,6 +20,11 @@ import { el, svgEl, appendAll, setVars, stagger } from './dom.js';
  * @property {(wave: number) => number[]} pop  Land one wave of fragments.
  * @property {() => number[]} wire             Draw the constellation.
  * @property {() => void} fade                 Recede, to clear room for copy.
+ * @property {() => void} startCycling         Begin shattering and reforming.
+ * @property {() => void} stopCycling          Halt the cycle.
+ * @property {() => Promise<{ left: DOMPoint, right: DOMPoint }>} converge
+ *   Detonate every fragment and draw the pieces to two points. Resolves with
+ *   those points so the caller can form the nav out of them.
  */
 
 /**
@@ -58,10 +65,14 @@ function placeFragment(index, total) {
  */
 export function createShardBurst(container, svg) {
   if (!container) {
+    const origin = new DOMPoint(0, 0);
     return Object.freeze({
       /** @returns {number[]} */ pop: () => [],
       /** @returns {number[]} */ wire: () => [],
-      fade() {}
+      fade() {},
+      startCycling() {},
+      stopCycling() {},
+      converge: () => Promise.resolve({ left: origin, right: origin })
     });
   }
 
@@ -134,5 +145,101 @@ export function createShardBurst(container, svg) {
     for (const shard of elements) shard.classList.add('is-faded');
   }
 
-  return Object.freeze({ pop, wire, fade });
+  /* ---------------------------------------------------------------
+     Cycling: a fragment shatters, and comes back carrying something
+     else. Labels are drawn from the pool without repeating anything
+     currently on screen, so the field keeps moving without the eye
+     catching the same word twice.
+     --------------------------------------------------------------- */
+
+  /** @type {number[]} */
+  let cycleTimers = [];
+  let cycling = false;
+
+  /** @returns {string} A label not currently displayed. */
+  function nextLabel() {
+    const onScreen = new Set(elements.map((shard) => shard.textContent));
+    const available = FRAGMENT_POOL.filter((label) => !onScreen.has(label));
+    const source = available.length > 0 ? available : FRAGMENT_POOL;
+    return source[Math.floor(Math.random() * source.length)];
+  }
+
+  /** @param {HTMLElement} shard */
+  function shatter(shard) {
+    shard.classList.add('is-shattering');
+    cycleTimers.push(window.setTimeout(() => {
+      shard.textContent = nextLabel();
+      shard.classList.remove('is-shattering');
+      shard.classList.add('is-reforming');
+      cycleTimers.push(window.setTimeout(
+        () => shard.classList.remove('is-reforming'),
+        FRAGMENT_CYCLE.shatterDuration
+      ));
+    }, FRAGMENT_CYCLE.shatterDuration));
+  }
+
+  /** @param {HTMLElement} shard */
+  function scheduleCycle(shard) {
+    const { minDelay, maxDelay } = FRAGMENT_CYCLE;
+    const delay = minDelay + Math.random() * (maxDelay - minDelay);
+
+    cycleTimers.push(window.setTimeout(() => {
+      if (!cycling) return;
+      shatter(shard);
+      scheduleCycle(shard);
+    }, delay));
+  }
+
+  function startCycling() {
+    if (cycling) return;
+    cycling = true;
+    for (const shard of elements) scheduleCycle(shard);
+  }
+
+  function stopCycling() {
+    cycling = false;
+    cycleTimers.forEach(window.clearTimeout);
+    cycleTimers = [];
+    for (const shard of elements) {
+      shard.classList.remove('is-shattering', 'is-reforming');
+    }
+  }
+
+  /**
+   * Everything shakes, then the pieces are drawn to two points. Resolves once
+   * they have arrived, with the coordinates the nav should form at.
+   *
+   * @returns {Promise<{ left: DOMPoint, right: DOMPoint }>}
+   */
+  function converge() {
+    stopCycling();
+    svg?.classList.add('is-dim');
+
+    const vmin = Math.min(window.innerWidth, window.innerHeight);
+    const offset = CONVERGE.spread * vmin;
+    const points = {
+      left: new DOMPoint(-offset, 0),
+      right: new DOMPoint(offset, 0)
+    };
+
+    for (const shard of elements) shard.classList.add('is-quaking');
+
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        elements.forEach((shard, i) => {
+          const target = i % 2 === 0 ? points.left : points.right;
+          shard.classList.remove('is-quaking', 'is-faded');
+          setVars(shard, {
+            '--x': `${target.x.toFixed(0)}px`,
+            '--y': `${target.y.toFixed(0)}px`
+          });
+          shard.classList.add('is-converging');
+        });
+
+        window.setTimeout(() => resolve(points), CONVERGE.duration);
+      }, CONVERGE.formDelay);
+    });
+  }
+
+  return Object.freeze({ pop, wire, fade, startCycling, stopCycling, converge });
 }

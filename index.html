@@ -100,6 +100,30 @@
     <p class="intro__shout" id="intro-shout"></p>
   </div>
 
+  <!-- The human beat. Types itself once the statement clears, while the
+       fragments are still in the air. -->
+  <div class="intro__bio" id="intro-bio">
+    <p>Hi — I'm Ambassador Eugene.</p>
+    <p>For ten years I <em>built</em> things with JavaScript. Mobile, web, servers — one line at a time.</p>
+    <p>These days I'm more pilot than programmer. The frontier models do the building; I chart the course, hold the line on what matters, and decide when we've arrived.</p>
+    <p class="intro__bio-close">Same craft. Different seat.</p>
+  </div>
+
+  <!-- What the fragments reassemble into. Real anchors: reachable by
+       keyboard and followable by a crawler even though the stage above
+       them is decorative. -->
+  <nav class="intro__nav" id="intro-nav" aria-label="Continue">
+    <a class="intro__nav-item" data-action="enter" href="#work">
+      <span class="intro__nav-label">Case studies</span>
+      <span class="intro__nav-sub">Three systems, one idea</span>
+    </a>
+    <a class="intro__nav-item" data-action="download"
+       href="assets/ambassador-eugene-cv.pdf" download>
+      <span class="intro__nav-label">Download CV</span>
+      <span class="intro__nav-sub">PDF · two pages</span>
+    </a>
+  </nav>
+
   <button class="btn btn--ghost intro__skip" id="skip-intro" type="button">Skip intro</button>
 </div>
 
@@ -114,7 +138,7 @@
 
     <h1 class="t-display">Ambassador<span class="hero__name-2 t-outline">Eugene</span></h1>
 
-    <p class="thesis" id="bio">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
+    <p class="thesis">I build production systems <b>in collaboration with frontier models</b> — and I'm the reason they hold up.</p>
     <p class="thesis thesis--sub">Ten years shipping React, React Native and Node. The last two building the layer underneath the demos: bounded tool loops, guardrails enforced by the call graph rather than the prompt, multi-model routing, durable orchestration. The model writes fast. I decide what it's allowed to touch, what gets enforced structurally, and what ships. Three systems below — each with the decision that carried it.</p>
 
     <div class="trace" role="img" aria-label="Decorative console showing a simulated agent run that loads the three case studies below.">

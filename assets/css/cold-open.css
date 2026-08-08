@@ -477,7 +477,10 @@ body.is-intro .hero .wrap > * { opacity: 0; }
    ACT VI — HANDOFF
    ============================================================ */
 
-.intro__copy.is-receding { animation: recede 900ms var(--ease-soft) forwards; }
+.intro__copy.is-receding {
+  animation: recede 900ms var(--ease-soft) forwards;
+  pointer-events: none;
+}
 @keyframes recede {
   to { opacity: 0; transform: scale(1.12); filter: blur(8px); }
 }
@@ -491,3 +494,217 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   animation: fade-in 400ms ease 400ms forwards;
 }
 @keyframes fade-in { to { opacity: 1; } }
+
+/* ============================================================
+   ACT VI — THE BIO
+   Types itself on the same locked stage, while the fragments keep
+   turning over around it.
+   ============================================================ */
+
+.intro__bio {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: min(46ch, 86vw);
+  text-align: left;
+  font-size: clamp(1.02rem, 0.9rem + 0.65vw, 1.42rem);
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 16px));
+  pointer-events: none;
+}
+.intro__bio.is-shown {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+}
+
+.intro__bio p {
+  margin: 0 0 0.85em;
+  color: var(--body);
+}
+.intro__bio em {
+  font-style: italic;
+  color: var(--text);
+}
+
+/* The closing line carries the weight, so it gets the accent and the space. */
+.intro__bio-close {
+  margin-top: 1.4em;
+  margin-bottom: 0;
+  color: var(--mint) !important;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* The caret the typewriter appends sits inline with the last character. */
+.intro__bio .caret { margin-left: 0.12em; }
+
+/* ============================================================
+   FRAGMENT CYCLING
+   A fragment shakes apart and comes back carrying something else.
+   `T` below is the resting transform declared on .is-popped; every
+   keyframe repeats it so the fragment animates in place.
+   ============================================================ */
+
+.shard.is-shattering {
+  animation: shard-shatter 520ms cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+@keyframes shard-shatter {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
+  }
+  30% {
+    transform: translate(-50%, -50%) translate(var(--x), var(--y))
+               translate(2px, -2px) scale(1.05);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y))
+               translate(-3px, 2px) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(0.35);
+  }
+}
+
+.shard.is-reforming {
+  animation: shard-reform 520ms var(--ease-pop) forwards;
+}
+@keyframes shard-reform {
+  0% {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(0.35);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
+  }
+}
+
+/* ============================================================
+   ACT VII — REASSEMBLY
+   Everything shakes, then the pieces are drawn to two points.
+   ============================================================ */
+
+.shard.is-quaking {
+  animation: shard-quake 620ms ease-in-out infinite;
+  opacity: 1;
+  z-index: 1;
+}
+@keyframes shard-quake {
+  0%, 100% { transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1); }
+  20% { transform: translate(-50%, -50%) translate(var(--x), var(--y)) translate(3px, -2px) scale(1.03) rotate(0.8deg); }
+  45% { transform: translate(-50%, -50%) translate(var(--x), var(--y)) translate(-4px, 3px) scale(1.05) rotate(-1deg); }
+  70% { transform: translate(-50%, -50%) translate(var(--x), var(--y)) translate(3px, 2px) scale(1.04) rotate(0.6deg); }
+}
+
+/**
+ * `animation: none` hands control back to the declared rest state on
+ * .is-popped, which is what the transition then animates away from.
+ */
+.shard.is-converging {
+  animation: none;
+  opacity: 0;
+  filter: blur(3px);
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(0.25);
+  transition:
+    transform 900ms cubic-bezier(0.55, 0, 0.2, 1),
+    opacity 900ms cubic-bezier(0.7, 0, 0.9, 0.4),
+    filter 900ms ease-in;
+}
+
+/* ============================================================
+   THE TWO PIECES
+   ============================================================ */
+
+.intro__nav {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  gap: clamp(0.75rem, 3vw, 2rem);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.intro__nav.is-formed {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.intro__nav-item {
+  display: block;
+  text-align: left;
+  text-decoration: none;
+  padding: 1.05rem 1.5rem;
+  border: 1px solid var(--edge-2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translate(var(--x, 0), var(--y, 0)) scale(0.2);
+  filter: blur(6px);
+}
+.intro__nav-item.is-formed {
+  animation: piece-form 800ms var(--ease-pop) forwards;
+}
+@keyframes piece-form {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x, 0), var(--y, 0)) scale(0.2);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(calc(var(--x, 0) * 0.25), calc(var(--y, 0) * 0.25)) scale(1.08);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.intro__nav-item:hover,
+.intro__nav-item:focus-visible {
+  border-color: var(--mint);
+  background: rgba(61, 245, 196, 0.08);
+}
+
+.intro__nav-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.intro__nav-item:hover .intro__nav-label { color: var(--mint); }
+
+.intro__nav-sub {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+@media (max-width: 34rem) {
+  .intro__nav { flex-direction: column; width: min(84vw, 22rem); }
+}

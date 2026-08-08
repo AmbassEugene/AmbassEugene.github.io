@@ -17,7 +17,9 @@
  * @module cold-open
  */
 
-import { TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY, IMPLODE } from './config.js';
+import {
+  TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY, IMPLODE
+} from './config.js';
 import { qs, qsa, el, appendAll, setVars, stagger } from './dom.js';
 import { prefersReducedMotion, isDeepLink, session } from './env.js';
 import { impact } from './vibration.js';
@@ -29,6 +31,7 @@ import { impact } from './vibration.js';
  * @property {import('./shard-burst.js').ShardBurst} burst
  * @property {import('./trace.js').Trace} trace
  * @property {import('./typewriter.js').Typewriter} bio
+ * @property {import('./stage-nav.js').StageNav} stageNav
  */
 
 /**
@@ -45,7 +48,7 @@ const DISMISS_KEYS = new Set(['Escape', 'Enter', ' ']);
  * @param {ColdOpenDeps} deps
  * @returns {ColdOpen}
  */
-export function createColdOpen({ field, vibration, burst, trace, bio }) {
+export function createColdOpen({ field, vibration, burst, trace, bio, stageNav }) {
   const scrim = qs('#intro-scrim');
   const intro = qs('#intro');
   const hero = qs('.hero .wrap');
@@ -55,6 +58,7 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
   const copy = qs('#intro-copy');
   const statement = qs('#intro-statement');
   const shout = qs('#intro-shout');
+  const bioBlock = qs('#intro-bio');
   const flash = qs('#flash');
   const skip = qs('#skip-intro');
   const rings = CADENCE.ringDurations.map((_, i) => qs(`#ring-${i + 1}`));
@@ -63,6 +67,8 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
 
   /** @type {number[]} */
   let timers = [];
+  /** @type {number | undefined} */
+  let readoutTimer;
   let ended = false;
 
   /**
@@ -89,17 +95,30 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
 
   /**
    * Swap the readout line, briefly fading through empty.
+   *
+   * The pending swap is tracked separately from the main timeline so that
+   * silencing the readout at detonation also cancels a swap already in
+   * flight — otherwise the last line reappears a beat after the blast.
+   *
    * @param {string} text
    * @param {boolean} [hot] Render in the alert colour.
    */
   function say(text, hot = false) {
     if (!readout) return;
+    window.clearTimeout(readoutTimer);
     readout.classList.remove('is-shown');
-    after(() => {
+    readoutTimer = window.setTimeout(() => {
       readout.textContent = text;
       readout.classList.toggle('is-hot', hot);
       readout.classList.add('is-shown');
     }, CADENCE.readoutSwap);
+    timers.push(readoutTimer);
+  }
+
+  /** Silence the readout, including any swap already scheduled. */
+  function hush() {
+    window.clearTimeout(readoutTimer);
+    readout?.classList.remove('is-shown');
   }
 
   /**
@@ -152,7 +171,7 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
     intro?.classList.add('is-quaking');
     impact();
 
-    if (readout) readout.classList.remove('is-shown');
+    hush();
     flash?.classList.add('is-firing');
     for (const layer of [...aberrations, ...shocks]) layer.classList.add('is-firing');
 
@@ -183,11 +202,16 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
     });
   }
 
+  /**
+   * Release the stage and hand the page over. Reached by choosing
+   * "Case studies", by skipping, or by a dismiss key — never by a timer.
+   */
   function end() {
     if (ended) return;
     ended = true;
 
     clearTimers();
+    burst.stopCycling();
     document.removeEventListener('keydown', onKey);
     vibration.stop();
     field.ambient();
@@ -200,17 +224,19 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
       intro?.remove();
       scrim?.remove();
     });
-    at(HANDOFF.startBio, handOffToBio);
+    at(HANDOFF.startTrace, () => trace.start());
   }
 
   /**
-   * The name has landed; the bio types itself, then the console takes over.
-   * Three textures in series rather than two typewriters at once.
+   * Act VII. The closing line lands, every fragment shakes apart, and the
+   * pieces are drawn to two points that resolve into the only two choices
+   * the stage offers. Nothing is on a timer from here — the sequence waits
+   * for the visitor rather than deciding for them.
    */
-  function handOffToBio() {
-    bio.run().then(() => {
-      timers.push(window.setTimeout(() => trace.start(), HANDOFF.traceAfterBio));
-    });
+  function reassemble() {
+    after(() => {
+      burst.converge().then((points) => stageNav.form(points));
+    }, HANDOFF.holdAfterBio);
   }
 
   /** Take the visitor straight to the page. */
@@ -278,9 +304,24 @@ export function createColdOpen({ field, vibration, burst, trace, bio }) {
 
     // ---- Act VI — handoff ----
     at(TIMELINE.copyRecedes, () => copy?.classList.add('is-receding'));
-    at(TIMELINE.end, end);
+
+    // ---- Act VI — the bio, typed while the fragments keep turning over ----
+    at(TIMELINE.bio, () => {
+      bioBlock?.classList.add('is-shown');
+      burst.startCycling();
+      bio.run().then(reassemble);
+    });
 
     skip?.addEventListener('click', end, { once: true });
+    stageNav.onEnter(() => {
+      end();
+      // Wait for the overlay to clear before jumping, or the scroll lands
+      // against a page that is still behind `overflow: hidden`.
+      window.setTimeout(
+        () => qs('#work')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        HANDOFF.removeOverlay
+      );
+    });
     document.addEventListener('keydown', onKey);
   }
 

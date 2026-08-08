@@ -62,8 +62,14 @@ export const TIMELINE = Object.freeze({
   shout: 11900,
   bloom: 13500,
 
-  // Act VI — handoff
+  // Act VI — the bio
   copyRecedes: 14300,
+  // The recede runs 900ms; the buffer keeps the statement from still
+  // being on screen as the bio fades up behind it.
+  bio: 15500,
+
+  // Act VII — handoff. Fired when the bio finishes typing rather than on a
+  // fixed beat, so the copy can be rewritten without retiming the sequence.
   end: 15000
 });
 
@@ -90,18 +96,19 @@ export const CADENCE = Object.freeze({
 export const HANDOFF = Object.freeze({
   heroDelay: 220,
   removeOverlay: 850,
-  /** The bio types once the name has landed, before the console starts. */
-  startBio: 1100,
-  /** Beat between the bio finishing and the console taking over. */
-  traceAfterBio: 450,
-  /** Used only when the bio is skipped, so the console still arrives. */
-  startTrace: 900
+  startTrace: 900,
+  /** Beat the closing line is left on screen before the page arrives. */
+  holdAfterBio: 1400
 });
 
 /** The typed bio in the hero. */
+/**
+ * The typed bio. Faster per character than a console would be, because
+ * this is prose a visitor is reading rather than output they are watching.
+ */
 export const BIO = Object.freeze({
-  charDelay: 21,
-  pauseOnPunctuation: 170
+  charDelay: 17,
+  pauseOnPunctuation: 190
 });
 
 /** Skim / full reading modes. */
@@ -204,6 +211,48 @@ export const FRAGMENTS = Object.freeze([
   { label: 'PostgreSQL' },
   { label: 'aggregates only', tone: 'mint' }
 ]);
+
+/**
+ * Spare artefacts the fragments cycle through. A fragment periodically
+ * shatters and reforms carrying a different one, so the field keeps moving
+ * without anything new entering the scene. Every entry is real: an ADR that
+ * exists, a guarantee the code actually makes.
+ */
+export const FRAGMENT_POOL = Object.freeze([
+  'RLS enabled', 'zero PII', 'idempotent', 'checkpointed', 'Playwright ✔',
+  'strict TS', 'no innerHTML', 'CSP: deny-all', 'rate-limited', 'fails open',
+  'Expo SDK 56', 'vector recall', 'reversible migration', '6 locales',
+  'conventional commits', 'ADR-004', 'bounded loop', 'server-resolved',
+  'audited pre-launch', 'no secrets in git'
+]);
+
+/** How often a fragment shatters and comes back carrying something else. */
+export const FRAGMENT_CYCLE = Object.freeze({
+  minDelay: 1400,
+  maxDelay: 4200,
+  /** Must match the shatter animation in cold-open.css. */
+  shatterDuration: 520
+});
+
+/**
+ * The two fragments everything reassembles into. These are the only
+ * navigation the opening stage offers.
+ */
+export const STAGE_NAV = Object.freeze([
+  { label: 'Case studies', action: 'enter', href: '#work' },
+  { label: 'Download CV', action: 'download', href: 'assets/ambassador-eugene-cv.pdf' }
+]);
+
+/** The collapse that reassembles the fragments into the two nav pieces. */
+export const CONVERGE = Object.freeze({
+  /** Horizontal offset of each convergence point, as a fraction of vmin. */
+  spread: 0.17,
+  /** Must match the converge transition in cold-open.css. */
+  duration: 900,
+  /** Beat between the fragments arriving and the nav resolving out of them. */
+  formDelay: 620,
+  stagger: 45
+});
 
 /** Geometry for scattering fragments without covering the copy. */
 export const SHARD_LAYOUT = Object.freeze({

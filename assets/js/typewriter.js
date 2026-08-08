@@ -62,7 +62,6 @@ export function createTypewriter(target, { charDelay = 22, pauseOnPunctuation = 
     }
 
     for (const segment of segments) segment.node.textContent = '';
-    target.appendChild(caret);
 
     return new Promise((resolve) => {
       let segmentIndex = 0;
@@ -84,6 +83,12 @@ export function createTypewriter(target, { charDelay = 22, pauseOnPunctuation = 
         const character = segment.text[charIndex];
         segment.node.textContent += character;
         charIndex += 1;
+
+        // Keep the caret with the line being written rather than parked at
+        // the end of the block, which is where appendChild would leave it
+        // once the target holds more than one paragraph.
+        const line = segment.node.parentElement ?? target;
+        if (caret.parentElement !== line) line.appendChild(caret);
 
         // Punctuation gets a beat, which is what stops it reading as a machine.
         const pause = '.,—:'.includes(character) ? pauseOnPunctuation : 0;

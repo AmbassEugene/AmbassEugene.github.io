@@ -130,11 +130,8 @@ export function createShardBurst(container, svg) {
 
   /** Recede so the statement has the stage. */
   function fade() {
-    if (svg) svg.classList.add('is-dim');
-    for (const shard of elements) {
-      shard.style.transition = 'opacity 900ms ease';
-      shard.style.opacity = String(SHARD_LAYOUT.fadedOpacity);
-    }
+    svg?.classList.add('is-dim');
+    for (const shard of elements) shard.classList.add('is-faded');
   }
 
   return Object.freeze({ pop, wire, fade });

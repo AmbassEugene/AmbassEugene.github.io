@@ -22,8 +22,23 @@ body.is-intro #field {
   opacity: 1;
 }
 
-/* Hero content is held back until the handoff. */
+/**
+ * Hero content is held back until the handoff, then rises in on a stagger
+ * the sequencer drives by swapping these two classes. The transition is
+ * declared here rather than assembled as a string in JavaScript, so motion
+ * stays a presentation concern.
+ */
 body.is-intro .hero .wrap > * { opacity: 0; }
+
+.hero .wrap > .is-pending {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.hero .wrap > .is-revealed {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+}
 
 .intro-scrim {
   position: fixed;
@@ -347,7 +362,24 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   background: rgba(139, 123, 255, 0.06);
 }
 
-.shard.is-popped { animation: shard-pop 900ms var(--ease-pop) forwards; }
+/**
+ * The resting state is declared, not held by `animation-fill-mode: forwards`.
+ * Both express the same values, but a filled animation outranks every normal
+ * declaration in the cascade — so with `forwards` the fade below could never
+ * apply without `!important`. Declaring the rest state keeps the override
+ * ordinary.
+ */
+.shard.is-popped {
+  animation: shard-pop 900ms var(--ease-pop);
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
+}
+
+/* Recede once the statement needs the stage. */
+.shard.is-faded {
+  opacity: 0.3;
+  transition: opacity 900ms ease;
+}
 @keyframes shard-pop {
   0%   { opacity: 0; transform: translate(-50%, -50%) translate(0, 0) scale(0.15) rotate(var(--rot)); }
   45%  { opacity: 1; }

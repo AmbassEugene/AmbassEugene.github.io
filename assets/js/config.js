@@ -77,7 +77,20 @@ export const CADENCE = Object.freeze({
   heroStagger: 110,
   traceMinGap: 90,
   traceJitter: 260,
-  traceLeadIn: 300
+  traceLeadIn: 300,
+  /** Beat the readout holds empty while swapping lines. */
+  readoutSwap: 260
+});
+
+/**
+ * The handoff, in milliseconds after the sequence ends. Separate from
+ * TIMELINE because these are offsets from `end()`, which the skip button can
+ * trigger at any point.
+ */
+export const HANDOFF = Object.freeze({
+  heroDelay: 220,
+  removeOverlay: 850,
+  startTrace: 900
 });
 
 /**
@@ -172,7 +185,6 @@ export const SHARD_LAYOUT = Object.freeze({
   copyBand: 0.42,
   copyBandPush: 0.55,
   maxRotation: 50,
-  fadedOpacity: 0.3,
   waves: Object.freeze([[0, 5], [5, 10], [10, 14]])
 });
 

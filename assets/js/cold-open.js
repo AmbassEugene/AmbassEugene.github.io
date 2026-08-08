@@ -17,7 +17,7 @@
  * @module cold-open
  */
 
-import { TIMELINE, CADENCE, FEATURES, INTRO_COPY } from './config.js';
+import { TIMELINE, CADENCE, HANDOFF, FEATURES, INTRO_COPY } from './config.js';
 import { qs, qsa, el, appendAll, setVars, stagger } from './dom.js';
 import { prefersReducedMotion, isDeepLink, session } from './env.js';
 import { impact } from './vibration.js';
@@ -37,6 +37,9 @@ import { impact } from './vibration.js';
  * @property {() => void} replay  Restart from the beginning.
  */
 
+/** Keys that cut straight to the page. */
+const DISMISS_KEYS = new Set(['Escape', 'Enter', ' ']);
+
 /**
  * @param {ColdOpenDeps} deps
  * @returns {ColdOpen}
@@ -51,6 +54,11 @@ export function createColdOpen({ field, vibration, burst, trace }) {
   const copy = qs('#intro-copy');
   const statement = qs('#intro-statement');
   const shout = qs('#intro-shout');
+  const flash = qs('#flash');
+  const skip = qs('#skip-intro');
+  const rings = CADENCE.ringDurations.map((_, i) => qs(`#ring-${i + 1}`));
+  const aberrations = intro ? qsa('.intro__ca', intro) : [];
+  const shocks = intro ? qsa('.intro__shock', intro) : [];
 
   /** @type {number[]} */
   let timers = [];
@@ -66,6 +74,13 @@ export function createColdOpen({ field, vibration, burst, trace }) {
   /** @param {number[]} ids Timer ids owned by a collaborator. */
   const track = (ids) => timers.push(...ids);
 
+  /**
+   * Schedule relative to now rather than to the start of the sequence.
+   * @param {() => void} fn
+   * @param {number} ms
+   */
+  const after = (fn, ms) => timers.push(window.setTimeout(fn, ms));
+
   function clearTimers() {
     timers.forEach(window.clearTimeout);
     timers = [];
@@ -79,11 +94,11 @@ export function createColdOpen({ field, vibration, burst, trace }) {
   function say(text, hot = false) {
     if (!readout) return;
     readout.classList.remove('is-shown');
-    at(260, () => {
+    after(() => {
       readout.textContent = text;
       readout.classList.toggle('is-hot', hot);
       readout.classList.add('is-shown');
-    });
+    }, CADENCE.readoutSwap);
   }
 
   /**
@@ -91,43 +106,54 @@ export function createColdOpen({ field, vibration, burst, trace }) {
    * @param {number} index Zero-based; maps to #ring-1, #ring-2, #ring-3.
    */
   function collapseRing(index) {
-    const ring = qs(`#ring-${index + 1}`);
+    const ring = rings[index];
     if (!ring) return;
     setVars(ring, { '--dur': `${CADENCE.ringDurations[index]}ms` });
     ring.classList.add('is-collapsing');
   }
 
-  /** Split the statement into words and the shout into characters. */
+  /**
+   * Split the statement into words and the shout into characters, keeping
+   * references to what we build. Act V animates these directly rather than
+   * querying the document for elements this function just created.
+   *
+   * @returns {{ words: HTMLElement[], chars: HTMLElement[] }}
+   */
   function buildCopy() {
+    /** @type {HTMLElement[]} */ let words = [];
+    /** @type {HTMLElement[]} */ let chars = [];
+
     if (statement) {
-      const words = INTRO_COPY.statement.split(' ');
-      appendAll(statement, words.flatMap((word, i) => {
-        const node = el('span', { className: 'intro__word', text: word });
-        return i < words.length - 1 ? [node, document.createTextNode(' ')] : [node];
-      }));
+      const parts = INTRO_COPY.statement.split(' ');
+      words = parts.map((word) => el('span', { className: 'intro__word', text: word }));
+      // Interleave real spaces so the line still wraps and reads as prose.
+      appendAll(statement, words.flatMap((node, i) =>
+        i < words.length - 1 ? [node, document.createTextNode(' ')] : [node]));
     }
 
     if (shout) {
-      appendAll(shout, Array.from(INTRO_COPY.shout, (character, i) => {
+      chars = Array.from(INTRO_COPY.shout, (character, i) => {
         const rotation = (i % 2 ? 1 : -1) * (8 + Math.random() * 14);
         return el('span', {
           className: 'intro__char',
           text: character,
           vars: { '--r': `${rotation.toFixed(1)}deg` }
         });
-      }));
+      });
+      appendAll(shout, chars);
     }
+
+    return { words, chars };
   }
 
   function detonate() {
     vibration.stop();
-    intro.classList.add('is-quaking');
+    intro?.classList.add('is-quaking');
     impact();
 
     if (readout) readout.classList.remove('is-shown');
-    qs('#flash')?.classList.add('is-firing');
-    qsa('.intro__ca', intro).forEach((layer) => layer.classList.add('is-firing'));
-    qsa('.intro__shock', intro).forEach((shock) => shock.classList.add('is-firing'));
+    flash?.classList.add('is-firing');
+    for (const layer of [...aberrations, ...shocks]) layer.classList.add('is-firing');
 
     singularity?.classList.remove('is-critical');
     singularity?.classList.add('is-blown');
@@ -146,18 +172,13 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     if (!hero || prefersReducedMotion()) return;
 
     const children = /** @type {HTMLElement[]} */ (Array.from(hero.children));
-    for (const child of children) {
-      child.style.opacity = '0';
-      child.style.transform = 'translateY(18px)';
-    }
+    for (const child of children) child.classList.add('is-pending');
 
     children.forEach((child, i) => {
-      timers.push(window.setTimeout(() => {
-        child.style.transition =
-          'opacity .8s var(--ease-out), transform .8s var(--ease-out)';
-        child.style.opacity = '1';
-        child.style.transform = 'none';
-      }, delay + i * CADENCE.heroStagger));
+      timers.push(window.setTimeout(
+        () => child.classList.replace('is-pending', 'is-revealed'),
+        delay + i * CADENCE.heroStagger
+      ));
     });
   }
 
@@ -166,18 +187,19 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     ended = true;
 
     clearTimers();
+    document.removeEventListener('keydown', onKey);
     vibration.stop();
     field.ambient();
 
     scrim?.classList.add('is-out');
     intro?.classList.add('is-out');
-    revealHero(220);
+    revealHero(HANDOFF.heroDelay);
 
-    at(850, () => {
+    at(HANDOFF.removeOverlay, () => {
       intro?.remove();
       scrim?.remove();
     });
-    at(900, () => trace.start());
+    at(HANDOFF.startTrace, () => trace.start());
   }
 
   /** Take the visitor straight to the page. */
@@ -204,7 +226,7 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     }
 
     document.body.classList.add('is-intro');
-    buildCopy();
+    const { words, chars } = buildCopy();
 
     // ---- Act I — the void ----
     at(TIMELINE.sayAwaiting, () => say(INTRO_COPY.readout.awaiting));
@@ -233,11 +255,11 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     // ---- Act V — the statement ----
     at(TIMELINE.matterRecedes, () => burst.fade());
     at(TIMELINE.statement, () => {
-      track(stagger(qsa('.intro__word', statement), CADENCE.wordStagger,
+      track(stagger(words, CADENCE.wordStagger,
         (word) => word.classList.add('is-in')));
     });
     at(TIMELINE.shout, () => {
-      track(stagger(qsa('.intro__char', shout), CADENCE.charStagger,
+      track(stagger(chars, CADENCE.charStagger,
         (character) => character.classList.add('is-in')));
     });
     at(TIMELINE.bloom, () => shout?.classList.add('is-blooming'));
@@ -246,16 +268,13 @@ export function createColdOpen({ field, vibration, burst, trace }) {
     at(TIMELINE.copyRecedes, () => copy?.classList.add('is-receding'));
     at(TIMELINE.end, end);
 
-    qs('#skip-intro')?.addEventListener('click', end);
+    skip?.addEventListener('click', end, { once: true });
     document.addEventListener('keydown', onKey);
   }
 
   /** @param {KeyboardEvent} event */
   function onKey(event) {
-    if (['Escape', 'Enter', ' '].includes(event.key)) {
-      end();
-      document.removeEventListener('keydown', onKey);
-    }
+    if (DISMISS_KEYS.has(event.key)) end();
   }
 
   /**

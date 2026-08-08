@@ -55,6 +55,9 @@ assets/js/
 tools/
   share-card.html           Source for the social card. Imports the site's tokens.
   build-share-card.sh       Renders it to PNG with headless Chrome.
+  md-to-html.mjs            Minimal Markdown subset → HTML. No dependencies.
+  cv.css                    Print styling for the CV.
+  build-cv.sh               Renders the CV markdown to a PDF.
 docs/
   security.md               Threat model, CSP, and a known limitation.
   adr/                      Architecture decision records.
@@ -104,6 +107,29 @@ deployment stays a plain file copy.
 **One value to change if the repository name changes.** `og:url`, `og:image`
 and `canonical` in `index.html` are absolute — most scrapers reject relative
 image URLs. They currently assume `https://ambasseugene.github.io/`.
+
+## The downloadable CV
+
+`assets/ambassador-eugene-cv.pdf` is generated, not maintained by hand:
+
+```bash
+./tools/build-cv.sh                       # default source path
+./tools/build-cv.sh path/to/master-cv.md  # explicit
+```
+
+The Markdown source lives **outside this repository**, alongside the private
+write-ups. That is deliberate: the CV is the source of truth and the site is a
+port of it, so the download can never drift from the document actually being
+sent to people. Rerun the script after editing the CV.
+
+**Phone numbers are stripped by default.** This PDF is served from a public
+site, where a number is scraped rather than read — the same reasoning that
+keeps it off `index.html`. Pass `--with-phone` for a copy going directly to a
+named recipient.
+
+The print stylesheet is deliberately light rather than the site's dark theme:
+a CV is read in a PDF viewer, pushed through applicant tracking systems and
+sometimes printed. The two documents share a voice, not a palette.
 
 ## Tuning the opening
 

@@ -354,7 +354,7 @@ export const TRACE_SCRIPT = Object.freeze([
   { kind: 'arg', text: '  { id: "zerli", depth: "full" }' },
   { kind: 'result', text: '  ↳ legacy audit · phased migration · tenancy', ok: 'ok' },
   { kind: 'call', text: '▸ render(portfolio)' },
-  { kind: 'result', text: '  ↳ 3 systems ready. scroll to inspect.' }
+  { kind: 'result', text: '  ↳ 3 systems + 8 builds ready. scroll to inspect.' }
 ]);
 
 /** Capability strip. */

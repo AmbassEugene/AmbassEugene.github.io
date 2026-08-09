@@ -717,3 +717,20 @@ body.is-intro .hero .wrap > * { opacity: 0; }
 @media (max-width: 34rem) {
   .intro__nav { flex-direction: column; width: min(84vw, 22rem); }
 }
+
+/**
+ * The bio grew a fourth paragraph, and the panel is centred on a stage that
+ * cannot scroll. On short viewports — laptops in landscape, phones with
+ * browser chrome — tighten the rhythm rather than let the two nav pieces
+ * fall off the bottom edge.
+ */
+@media (max-height: 800px) {
+  .intro__bio {
+    font-size: clamp(0.9rem, 0.82rem + 0.4vw, 1.12rem);
+    line-height: 1.5;
+  }
+  .intro__bio p { margin-bottom: 0.7em; }
+  .intro__bio-close { margin-top: 1em; }
+  .intro__nav { margin-top: clamp(1.25rem, 3vh, 2rem); }
+  .intro__nav-item { padding: 0.85rem 1.2rem; }
+}

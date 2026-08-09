@@ -361,7 +361,8 @@ export const TRACE_SCRIPT = Object.freeze([
 export const MARQUEE_ITEMS = Object.freeze([
   'Agent orchestration', 'Bounded tool loops', 'Prompt-injection defence',
   'Multi-model routing', 'Durable execution', 'RAG + Pinecone',
-  'Multi-tenant isolation', 'TypeScript (strict)', 'React · React Native',
+  'Multi-tenant isolation', 'TypeScript (strict)', 'Python · FastAPI',
+  'React · React Native',
   'Node.js', 'PostgreSQL · Supabase', 'Stripe · Paystack', 'Evals & tracing',
   'Next.js', 'Inngest', 'i18n at compile time'
 ]);

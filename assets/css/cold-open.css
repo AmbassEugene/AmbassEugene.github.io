@@ -661,7 +661,9 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   padding: 1.05rem 1.5rem;
   border: 1px solid var(--edge-2);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  /* Near-opaque: the rotating bloom sits behind this, and a translucent
+     panel would let it wash over the label rather than halo the edge. */
+  background: rgba(10, 14, 19, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   opacity: 0;
@@ -733,4 +735,118 @@ body.is-intro .hero .wrap > * { opacity: 0; }
   .intro__bio-close { margin-top: 1em; }
   .intro__nav { margin-top: clamp(1.25rem, 3vh, 2rem); }
   .intro__nav-item { padding: 0.85rem 1.2rem; }
+}
+
+/* ============================================================
+   THE TWO PIECES — ROTATING BORDER GLOW
+   A conic gradient swept around each piece once it has formed.
+
+   Two layers: a hairline ring, and a blurred bloom of the same
+   gradient behind it. The ring is drawn by painting the gradient over
+   the whole box and masking out everything but a 1.5px border — the
+   mask-composite trick — which keeps the corner radius exact where a
+   rotated square would clip it.
+   ============================================================ */
+
+@property --glow-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.intro__nav-item {
+  position: relative;
+  isolation: isolate;
+}
+
+.intro__nav-item::before,
+.intro__nav-item::after {
+  content: "";
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(
+    from var(--glow-angle),
+    transparent 0deg,
+    transparent 170deg,
+    var(--mint) 240deg,
+    #7fe9ff 275deg,
+    var(--violet) 310deg,
+    transparent 360deg
+  );
+}
+
+/* The ring. */
+.intro__nav-item::before {
+  inset: -1px;
+  padding: 1.5px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+/**
+ * The bloom.
+ *
+ * A negative z-index pseudo-element paints *above* its parent's background,
+ * not behind it, so an unmasked bloom washes over the panel however opaque
+ * that panel is. It is therefore masked to an outer band by the same
+ * technique as the ring, and only then blurred — which spreads it outward
+ * into a halo while leaving the interior clear.
+ */
+.intro__nav-item::after {
+  inset: -4px;
+  padding: 7px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: blur(11px);
+  z-index: -1;
+}
+
+/* Labels stay above both layers regardless of how the glow is stacked. */
+.intro__nav-label,
+.intro__nav-sub {
+  position: relative;
+  z-index: 1;
+}
+
+/* Only once the piece has resolved out of the debris. */
+.intro__nav-item.is-formed::before,
+.intro__nav-item.is-formed::after {
+  animation:
+    glow-spin 4.2s linear infinite,
+    glow-in 900ms var(--ease-out) forwards;
+}
+.intro__nav-item.is-formed::after {
+  animation:
+    glow-spin 4.2s linear infinite,
+    glow-in-soft 900ms var(--ease-out) forwards;
+}
+
+@keyframes glow-spin { to { --glow-angle: 360deg; } }
+@keyframes glow-in      { to { opacity: 1; } }
+@keyframes glow-in-soft { to { opacity: 0.5; } }
+
+/* Hovering brings the bloom up rather than changing its character. */
+.intro__nav-item:hover::after,
+.intro__nav-item:focus-visible::after {
+  opacity: 0.9;
+  filter: blur(14px);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/**
+ * Without @property the angle is not an animatable type, so the sweep
+ * simply holds still and the pieces keep a static gradient edge. Nothing
+ * is lost but the motion.
+ */
+@supports not (background: conic-gradient(from var(--glow-angle), red, blue)) {
+  .intro__nav-item::before,
+  .intro__nav-item::after { background: linear-gradient(120deg, var(--mint), var(--violet)); }
 }
